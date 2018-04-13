@@ -1,36 +1,58 @@
 clearvars
+close all
 
 root='D:\Ruonan\Projects in the lab\VA_RA_PTB\Clinical and behavioral';
-
 % filename = [root,'\Clinical_Behavioral_040518.txt'];
+% % data=tdfread(filename);
 % tb = readtable(filename);
 
 load(fullfile(root,'all data.mat'));
 
-% survey = readtable(fullfile(root, 'survey_091517.txt'));
+%% caculate model free scores
+tb.r = nanmean([tb.r25, tb.r50, tb.r75],2);
+tb.a_r50 = nanmean([tb.a24_r50, tb.a50_r50, tb.a74_r50],2);
+
+%% include subjects
+cluster = {'Re-experiencing','Avoidance','Emotional Numbing','Dysphoric Arousal','Anxious Arousal','Total'};
+param = {'alpha','beta'};
+domain = {'gain','loss'};
+
+% which group to look at
+include = strcmp(tb.group, 'P') & tb.isExcluded_behavior == 0;
+% Include all subjects
+include = (strcmp(tb.group, 'C') | strcmp(tb.group, 'P') | strcmp(tb.group, 'R')) & tb.isExcluded_behavior == 0;
+% Include all subjects
+include = (strcmp(tb.group, 'C') | strcmp(tb.group, 'P')) & tb.isExcluded_behavior == 0;
+
+% number of controls
+ncontrol = sum(tb.isGain == 1 & strcmp(tb.group, 'C') & tb.isExcluded_behavior == 0)
+% number of PTSDs
+nptsd = sum(tb.isGain == 1 & strcmp(tb.group, 'P') & tb.isExcluded_behavior == 0)
+% number of remitted PTSDs
+nrptsd = sum(tb.isGain == 1 & strcmp(tb.group, 'R') & tb.isExcluded_behavior == 0)
 
 %% two-way anova seperate for risk and ambiguity
 % risk, all
-[p,tbl,stats,terms]=anovan(tb.alpha_t(tb.isExcluded_behavior == 0),{tb.group(tb.isExcluded_behavior == 0);tb.isGain(tb.isExcluded_behavior == 0)},'full');
+[p,tbl,stats,terms]=anovan(tb.r(tb.isExcluded_behavior == 0),{tb.group(tb.isExcluded_behavior == 0);tb.isGain(tb.isExcluded_behavior == 0)},'full');
 
 % risk, CC and PTSD
-[p,tbl,stats,terms]=anovan(tb.alpha_t(tb.isExcluded_behavior == 0 & ~strcmp(tb.group, 'R')),{tb.group(tb.isExcluded_behavior == 0 & ~strcmp(tb.group, 'R') );tb.isGain(tb.isExcluded_behavior == 0 & ~strcmp(tb.group, 'R'))},'full');
+[p,tbl,stats,terms]=anovan(tb.r(tb.isExcluded_behavior == 0 & ~strcmp(tb.group, 'R')),{tb.group(tb.isExcluded_behavior == 0 & ~strcmp(tb.group, 'R') );tb.isGain(tb.isExcluded_behavior == 0 & ~strcmp(tb.group, 'R'))},'full');
 
 % risk gain, CC and PTSD
-[p,tbl,stats,terms]=anovan(tb.alpha_t(tb.isExcluded_behavior == 0 & ~strcmp(tb.group, 'R') & tb.isGain==1),{tb.group(tb.isExcluded_behavior == 0 & ~strcmp(tb.group, 'R') & tb.isGain==1 )},'full');
+[p,tbl,stats,terms]=anovan(tb.r(tb.isExcluded_behavior == 0 & ~strcmp(tb.group, 'R') & tb.isGain==1),{tb.group(tb.isExcluded_behavior == 0 & ~strcmp(tb.group, 'R') & tb.isGain==1 )},'full');
 
 
 % ambig, all
-[p,tbl,stats,terms]=anovan(tb.beta_t(tb.isExcluded_behavior == 0),{tb.group(tb.isExcluded_behavior == 0);tb.isGain(tb.isExcluded_behavior == 0)},'full');
+[p,tbl,stats,terms]=anovan(tb.a_r50(tb.isExcluded_behavior == 0),{tb.group(tb.isExcluded_behavior == 0);tb.isGain(tb.isExcluded_behavior == 0)},'full');
 
 % ambig, CC and PTSD
-[p,tbl,stats,terms]=anovan(tb.beta_t(tb.isExcluded_behavior == 0 & ~strcmp(tb.group, 'R')),{tb.group(tb.isExcluded_behavior == 0 & ~strcmp(tb.group, 'R') );tb.isGain(tb.isExcluded_behavior == 0 & ~strcmp(tb.group, 'R'))},'full');
+[p,tbl,stats,terms]=anovan(tb.a_r50(tb.isExcluded_behavior == 0 & ~strcmp(tb.group, 'R')),{tb.group(tb.isExcluded_behavior == 0 & ~strcmp(tb.group, 'R') );tb.isGain(tb.isExcluded_behavior == 0 & ~strcmp(tb.group, 'R'))},'full');
 
 % ambig, loss
-[p,tbl,stats,terms]=anovan(tb.beta_t(tb.isExcluded_behavior == 0 & tb.isGain==0 ),{tb.group(tb.isExcluded_behavior == 0 & tb.isGain==0) },'full');
+[p,tbl,stats,terms]=anovan(tb.a_r50(tb.isExcluded_behavior == 0 & tb.isGain==0 ),{tb.group(tb.isExcluded_behavior == 0 & tb.isGain==0) },'full');
 
 % ambig, loss, CC and PTSD
-[p,tbl,stats,terms]=anovan(tb.beta_t(tb.isExcluded_behavior == 0 & tb.isGain==0 & ~strcmp(tb.group, 'R')),{tb.group(tb.isExcluded_behavior == 0 & tb.isGain==0 & ~strcmp(tb.group, 'R')) },'full');
+[p,tbl,stats,terms]=anovan(tb.a_r50(tb.isExcluded_behavior == 0 & tb.isGain==0 & ~strcmp(tb.group, 'R')),{tb.group(tb.isExcluded_behavior == 0 & tb.isGain==0 & ~strcmp(tb.group, 'R')) },'full');
 
 
 % three-way anova
@@ -121,16 +143,16 @@ end
 % group 1: vcc, group2: ptsd, group3: fptsd
 
 %risk graph:
-plotmeanRisk = [nanmean(tbgain.alpha_t(vccidxgain)),nanmean(tbgain.alpha_t(ptsdidxgain)),nanmean(tbgain.alpha_t(fptsdidxgain));...
-    nanmean(tbloss.alpha_t(vccidxloss)),nanmean(tbloss.alpha_t(ptsdidxloss)),nanmean(tbloss.alpha_t(fptsdidxloss))];
+plotmeanRisk = [nanmean(tbgain.r(vccidxgain)),nanmean(tbgain.r(ptsdidxgain)),nanmean(tbgain.r(fptsdidxgain));...
+    nanmean(tbloss.r(vccidxloss)),nanmean(tbloss.r(ptsdidxloss)),nanmean(tbloss.r(fptsdidxloss))];
 
-plotsemRisk = [std(tbgain.alpha_t(vccidxgain))/sqrt(length(tbgain.alpha_t(vccidxgain))),...
-    std(tbgain.alpha_t(ptsdidxgain))/sqrt(length(tbgain.alpha_t(ptsdidxgain))),...
-    std(tbgain.alpha_t(fptsdidxgain))/sqrt(length(tbgain.alpha_t(fptsdidxgain)));...
+plotsemRisk = [std(tbgain.r(vccidxgain))/sqrt(length(tbgain.r(vccidxgain))),...
+    std(tbgain.r(ptsdidxgain))/sqrt(length(tbgain.r(ptsdidxgain))),...
+    std(tbgain.r(fptsdidxgain))/sqrt(length(tbgain.r(fptsdidxgain)));...
     ...
-    std(tbloss.alpha_t(vccidxloss))/sqrt(length(tbloss.alpha_t(vccidxloss))),...
-    std(tbloss.alpha_t(ptsdidxloss))/sqrt(length(tbloss.alpha_t(ptsdidxloss))),...
-    std(tbloss.alpha_t(fptsdidxloss))/sqrt(length(tbloss.alpha_t(fptsdidxloss)))];
+    std(tbloss.r(vccidxloss))/sqrt(length(tbloss.r(vccidxloss))),...
+    std(tbloss.r(ptsdidxloss))/sqrt(length(tbloss.r(ptsdidxloss))),...
+    std(tbloss.r(fptsdidxloss))/sqrt(length(tbloss.r(fptsdidxloss)))];
 
 
 fig = figure
@@ -163,9 +185,9 @@ ax.FontSize = 35;
 ax.LineWidth =3;
 ax.YLabel.String = 'transformed alpha'; 
 ax.YLabel.FontSize = 35;
-ax.YLim = [-0.7,0.6];
+% ax.YLim = [-0.7,0.6];
 
-title('Parametric estimate of Risk attitude')
+title('model free risk')
 
 leg = legend('CC','PTSD','RPTSD');
 leg.FontSize = 20;
@@ -173,18 +195,18 @@ leg.FontSize = 20;
 
 
 %ambig graph:
-plotmeanAmbig = [nanmean(tbgain.beta_t(vccidxgain)),nanmean(tbgain.beta_t(ptsdidxgain)),nanmean(tbgain.beta_t(fptsdidxgain));...
-    nanmean(tbloss.beta_t(vccidxloss)),nanmean(tbloss.beta_t(ptsdidxloss)),nanmean(tbloss.beta_t(fptsdidxloss))];
+plotmeanAmbig = [nanmean(tbgain.a_r50(vccidxgain)),nanmean(tbgain.a_r50(ptsdidxgain)),nanmean(tbgain.a_r50(fptsdidxgain));...
+    nanmean(tbloss.a_r50(vccidxloss)),nanmean(tbloss.a_r50(ptsdidxloss)),nanmean(tbloss.a_r50(fptsdidxloss))];
 
 % note that subject 120 does not have beta for gains. have to use nanstd to
 % calculate sem
-plotsemAmbig = [std(tbgain.beta_t(vccidxgain))/sqrt(length(tbgain.beta_t(vccidxgain))),...
-    nanstd(tbgain.beta_t(ptsdidxgain))/sqrt(length(tbgain.beta_t(ptsdidxgain))-1),...
-    std(tbgain.beta_t(fptsdidxgain))/sqrt(length(tbgain.beta_t(fptsdidxgain)));...
+plotsemAmbig = [std(tbgain.a_r50(vccidxgain))/sqrt(length(tbgain.a_r50(vccidxgain))),...
+    nanstd(tbgain.a_r50(ptsdidxgain))/sqrt(length(tbgain.a_r50(ptsdidxgain))-1),...
+    std(tbgain.a_r50(fptsdidxgain))/sqrt(length(tbgain.a_r50(fptsdidxgain)));...
     ...
-    std(tbloss.beta_t(vccidxloss))/sqrt(length(tbloss.beta_t(vccidxloss))),...
-    std(tbloss.beta_t(ptsdidxloss))/sqrt(length(tbloss.beta_t(ptsdidxloss))),...
-    std(tbloss.beta_t(fptsdidxloss))/sqrt(length(tbloss.beta_t(fptsdidxloss)))];
+    std(tbloss.a_r50(vccidxloss))/sqrt(length(tbloss.a_r50(vccidxloss))),...
+    std(tbloss.a_r50(ptsdidxloss))/sqrt(length(tbloss.a_r50(ptsdidxloss))),...
+    std(tbloss.a_r50(fptsdidxloss))/sqrt(length(tbloss.a_r50(fptsdidxloss)))];
 
 
 fig = figure
@@ -197,7 +219,7 @@ errorbar([1,2],plotmeanAmbig(:,2),plotsemAmbig(:,2),'.','Color',[0,0,0],'LineWid
 hold on
 errorbar([1,2]+0.22,plotmeanAmbig(:,3),plotsemAmbig(:,3),'.','Color',[0,0,0],'LineWidth',2);
 
-%bar color
+% bar color
 bplot(1).FaceColor = [104,160,66]/255;
 bplot(1).EdgeColor = [104,160,66]/255;
 bplot(2).FaceColor = [237,125,49]/255;
@@ -217,43 +239,18 @@ ax.FontSize = 35;
 ax.LineWidth =3;
 ax.YLabel.String = 'transformed beta'; 
 ax.YLabel.FontSize = 35;
-ax.YLim = [-1.2,0.6];
+% ax.YLim = [-1.2,0.6];
 
-title('Parametric estimate of Ambiguity attitude')
+title('model free ambiguity')
 
 leg = legend('CC','PTSD','RPTSD');
 leg.FontSize = 20;
 
 % % one sample t test
-% [h,p,ci,stats] = ttest(tbloss.alpha_t(vccidxloss))
+% [h,p,ci,stats] = ttest(tbloss.r(vccidxloss))
 % 
-% [h,p,ci,stats] = ttest(tbgain.beta_t(vccidxgain))
+% [h,p,ci,stats] = ttest(tbgain.a_r50(vccidxgain))
 % 
 % 
 % % ambig, loss anova on way
-% [p,tbl,stats,terms]=anovan(tb.beta_t(tb.isExcluded_behavior == 0 & tb.isGain==0 ),{tb.group(tb.isExcluded_behavior == 0 & tb.isGain==0)},'full');
-% 
-
-    %% FI there are outliers to exclude
-    outexcluded = find(tb.beta_t(tb.isExcluded_behavior == 0 & tb.isGain == 0)>-1.5);
-    hold on
-    % linear regression
-    mdl2 = LinearModel.fit(x(outexcluded),y(outexcluded)); % creates a linear model of the responses y to a tb matrix x
-    coeff = table2array(mdl2.Coefficients);
-    linex = linspace(0,max(x)+5);
-    liney = coeff(2,1)*linex+coeff(1,1);
-    plot(linex, liney, 'color','r');
-    
-    % print text of r2 and p value
-    txt1 = ['R^{2} = ',num2str(mdl2.Rsquared.Adjusted)];
-    txt2 = ['p = ', num2str(round(coeff(2,4),4,'significant'))];
-    xlab = xlim;
-    ylab = ylim;
-    %dim = [0.8 0.8 0.3 0.1]; %[x y w h]
-    txt = {txt1;txt2};
-%     if i==1|i==2
-%         text(xlab(2)-(xlab(2)-xlab(1))/4, ylab(2)+0.2, txt, 'FontSize',8)
-%     else
-    text(xlab(2)-(xlab(2)-xlab(1))/4, ylab(2)-(ylab(2)-ylab(1))/4, txt, 'FontSize',8, 'color', 'r')
-    
-
+% [p,tbl,stats,terms]=anovan(tb.a_r50(tb.isExcluded_behavior == 0 & tb.isGain==0 ),{tb.group(tb.isExcluded_behavior == 0 & tb.isGain==0)},'full');
