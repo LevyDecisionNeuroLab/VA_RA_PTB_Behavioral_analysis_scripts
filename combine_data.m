@@ -34,6 +34,10 @@ tbatt.a24_r50 = tbatt.a24-tbatt.r50;
 tbatt.a50_r50 = tbatt.a50-tbatt.r50;
 tbatt.a74_r50 = tbatt.a74-tbatt.r50;
 
+% caculate model free scores
+tbatt.r = nanmean([tbatt.r25, tbatt.r50, tbatt.r75],2);
+tbatt.a_r50 = nanmean([tbatt.a24_r50, tbatt.a50_r50, tbatt.a74_r50],2);
+
 % combine error and att sheets
 tb1 = join(tbatt, tberror, 'Keys', {'id', 'isGain'});
 

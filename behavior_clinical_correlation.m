@@ -6,10 +6,9 @@ root='D:\Ruonan\Projects in the lab\VA_RA_PTB\Clinical and behavioral';
 % % data=tdfread(filename);
 % tb = readtable(filename);
 
-load(fullfile(root,'all data.mat'));
+load(fullfile(root,'all data_male.mat'));
 
-
-%% regression alpha/beta with symptoms, auto
+%% including
 cluster = {'Re-experiencing','Avoidance','Emotional Numbing','Dysphoric Arousal','Anxious Arousal','Total'};
 param = {'alpha','beta'};
 domain = {'gain','loss'};
@@ -89,42 +88,14 @@ for i = 1:length(cluster)
             elseif strcmp(param2plot, 'beta')
                 y = tb.beta_t(tb.isExcluded_behavior == 0 & domainIdx & include);
             end
-
+            
+            plotcorr(x,y,cluster2plot,[param2plot '-' domain2plot]);
 
 
             %     x = tb.N_fi_pm(tb.isExcluded_behavior == 0 & tb.isGain == 0);
             %     x = tb.caps_total_pm(tb.isExcluded_behavior == 0 & tb.isGain == 0);
             %     y = tb.beta_t(tb.isExcluded_behavior == 0 & tb.isGain == 0);
-                figure    
-                scatter(x,y, 'filled');
-                hold on
-                % linear regression
-                mdl1 = LinearModel.fit(x,y); % creates a linear model of the responses y to a tb matrix x
-                coeff = table2array(mdl1.Coefficients);
-                linex = linspace(0,max(x)+5);
-                liney = coeff(2,1)*linex+coeff(1,1);
-                plot(linex, liney, 'color','k');
 
-                % print text of r2 and p value
-                txt1 = ['R^{2} = ',num2str(mdl1.Rsquared.Ordinary)];
-                txt2 = ['p = ', num2str(round(coeff(2,4),4,'significant'))];
-                xlab = xlim;
-                ylab = ylim;
-                %dim = [0.8 0.8 0.3 0.1]; %[x y w h]
-                txt = {txt1;txt2};
-            %     if i==1|i==2
-            %         text(xlab(2)-(xlab(2)-xlab(1))/4, ylab(2)+0.2, txt, 'FontSize',8)
-            %     else
-                text(xlab(2)-(xlab(2)-xlab(1))/4, ylab(2), txt, 'FontSize',8)
-            %     end
-
-                %text(xlab(2)-(xlab(2)-xlab(1))/4, ylab(2)+0.07, txt1, 'FontSize',8)
-                %text(xlab(2)-(xlab(2)-xlab(1))/4, ylab(2)+0.02,txt2,'FontSize',8)
-
-                %annotation('textbox',dim,'string',txt,'FitBoxToText','on');
-                title(cluster2plot) % title of subplot
-                ylabel([param2plot '-' domain2plot]) 
-                
                 % save the plot
         end
     end
@@ -133,7 +104,7 @@ end
 %% specify plot
 cluster2plot = 'Total';
 param2plot = 'beta';
-domain2plot = 'gain';
+domain2plot = 'loss';
 
 if strcmp(domain2plot,'gain')
     domainIdx = (tb.isGain == 1);
@@ -162,34 +133,41 @@ elseif strcmp(param2plot, 'beta')
 end
 
 
+plotcorr(x,y,cluster2plot,[param2plot '-' domain2plot]);
 
-    figure    
-    scatter(x,y);
-    hold on
-    % linear regression
-    mdl1 = LinearModel.fit(x,y); % creates a linear model of the responses y to a tb matrix x
-    coeff = table2array(mdl1.Coefficients);
-    linex = linspace(0,max(x)+5);
-    liney = coeff(2,1)*linex+coeff(1,1);
-    plot(linex, liney, 'color','k');
-    
-    % print text of r2 and p value
-    txt1 = ['R^{2} = ',num2str(mdl1.Rsquared.Adjusted)];
-    txt2 = ['p = ', num2str(round(coeff(2,4),4,'significant'))];
-    xlab = xlim;
-    ylab = ylim;
-    %dim = [0.8 0.8 0.3 0.1]; %[x y w h]
-    txt = {txt1;txt2};
-%     if i==1|i==2
-%         text(xlab(2)-(xlab(2)-xlab(1))/4, ylab(2)+0.2, txt, 'FontSize',8)
-%     else
-    text(xlab(2)-(xlab(2)-xlab(1))/4, ylab(2), txt, 'FontSize',8)
-%     end
+%% correlation matrix
 
-    %text(xlab(2)-(xlab(2)-xlab(1))/4, ylab(2)+0.07, txt1, 'FontSize',8)
-    %text(xlab(2)-(xlab(2)-xlab(1))/4, ylab(2)+0.02,txt2,'FontSize',8)
-    
-    %annotation('textbox',dim,'string',txt,'FitBoxToText','on');
-    title(cluster2plot) % title of subplot
-    ylabel([param2plot '-' domain2plot]) 
+include_gain = (strcmp(tb.group, 'C') | strcmp(tb.group, 'P')) &...
+    tb.isExcluded_behavior == 0 & tb.isGain == 1;
+
+include_loss = (strcmp(tb.group, 'C') | strcmp(tb.group, 'P')) &...
+    tb.isExcluded_behavior == 0 & tb.isGain == 0;
+
+
+tb2plot_clinical = table(tb.caps_total_pm(include_gain),tb.pcl5_total(include_gain),...
+    tb.pclm_total(include_gain), 'VariableNames',{'CAPStotal', 'PCL5','PCLM'});
+
+tb2plot_clinical = table(tb.caps_total_pm(include_gain),tb.R_fi_pm(include_gain),...
+    tb.A_fi_pm(include_gain), tb.N_fi_pm(include_gain),...
+    tb.DA_fi_pm(include_gain), tb.AA_fi_pm(include_gain),...
+    'VariableNames',{'Total','Reex','Avoid','Numb','Dysph','Anx'});
+
+tb2plot_clinical = table(tb.bdiii_total(include_gain),tb.madrs_total(include_gain),...
+    tb.hama_total(include_gain), tb.stai_x1_total(include_gain), tb.stai_x2_total(include_gain),...
+    tb.bai_total(include_gain), tb.rses_total(include_gain),...
+    'VariableNames',{'BDI', 'MADRS','HARS','STAI1','STAI2','BAI','RSES'});
+
+tb2plot_clinical = table(tb.ctq_total(include_gain),tb.ces_total(include_gain),...
+    tb.drri2_combat_exposure_total(include_gain),...
+    'VariableNames',{'CTQ', 'CES','DRRI'});
+
+tb2plot_behav = table(tb.alpha_t(include_gain), tb.beta_t(include_gain),...
+    tb.alpha_t(include_loss), tb.beta_t(include_loss),...
+    'VariableNames',{'alphaGain', 'betaGain','alphaLoss','betaLoss'});
+
+tb2plot_behav = table(tb.r(include_gain), tb.a_r50(include_gain),...
+    tb.r(include_loss), tb.a_r50(include_loss),...
+    'VariableNames',{'riskGain', 'ambigGain','riskLoss','ambigLoss'});
+
+plotcorrmat2(tb2plot_clinical, tb2plot_behav)
 
