@@ -7,7 +7,7 @@ root='D:\Ruonan\Projects in the lab\VA_RA_PTB\Clinical and behavioral';
 % % data=tdfread(filename);
 % tb = readtable(filename);
 
-load(fullfile(root,'all data.mat'));
+load(fullfile(root,'all data_male.mat'));
 
 % which group to look at
 include = strcmp(tb.group, 'P') & tb.isExcluded_behavior == 0;
@@ -23,7 +23,7 @@ nptsd = sum(tb.isGain == 1 & strcmp(tb.group, 'P') & tb.isExcluded_behavior == 0
 % number of remitted PTSDs
 nrptsd = sum(tb.isGain == 1 & strcmp(tb.group, 'R') & tb.isExcluded_behavior == 0)
 
-%%
+%% plot group average
 
 % find groups
 include =find(tb.isExcluded_behavior == 0 & tb.isGain == 1);
@@ -72,14 +72,32 @@ end
 
 
 % which clinical measurement to plot
+symptomname = 'CAPS';
+symptom = tb2plot.caps_total_pm;
+
+symptomname = 'CES';
+symptom = tb2plot.ces_total;
+
 symptomname = 'BDI';
 symptom = tb2plot.bdiii_total;
+
+symptomname = 'STAI1';
+symptom = tb2plot.stai_x1_total;
+
+symptomname = 'STAI2';
+symptom = tb2plot.stai_x2_total;
 
 plotmean = [nanmean(symptom(vccidx));nanmean(symptom(ptsdidx));nanmean(symptom(fptsdidx))];
 
 plotsem = [nanstd(symptom(vccidx))/sqrt(sum(~isnan(symptom(vccidx))));...
     nanstd(symptom(ptsdidx))/sqrt(sum(~isnan(symptom(ptsdidx))));...
     nanstd(symptom(fptsdidx))/sqrt(sum(~isnan(symptom(fptsdidx))))];
+
+fighist = figure
+hist(symptom)
+% ax = gca;
+% ax.YLim = [0,0.6];
+title(symptomname)
 
 fig = figure
 aHand = axes('parent',fig);
@@ -110,13 +128,7 @@ ax.YLabel.FontSize = 35;
 ax.XTickLabel = [];
 % ax.YLim = [-0.7,0.6];
 
-
-bplot(1).BarWidth = 0.9;
-
-
-
 title(symptomname)
 
 leg = legend('CC','PTSD','RPTSD');
 leg.FontSize = 20;
-
