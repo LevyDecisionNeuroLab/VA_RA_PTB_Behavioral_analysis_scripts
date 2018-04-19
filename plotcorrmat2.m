@@ -45,9 +45,10 @@ cmap = cmap(length(cmap)/2+1:length(cmap),:);
 for i = 1:size(tb2plot2,2)
     for j = 1:size(tb2plot1,2)
         set(AX(i,j), 'color', cmap(ceil(abs(corrmat(j,size(tb2plot1,2)+i))*length(cmap)),:));
-        txt1 = ['r=', num2str(round(corrmat(j,size(tb2plot1,2)+i),2))];
+        txt1 = ['r= ', num2str(round(corrmat(j,size(tb2plot1,2)+i),2))];
         txt2 = ['p=', num2str(round(pmat(j,size(tb2plot1,2)+i),2,'significant'))];
-        txt = {txt1;txt2};
+        txt3 = ['n=', num2str(sum(   ~isnan(table2array(tb2plot2(:,i))) & ~isnan(table2array(tb2plot1(:,j)))   ))];
+        txt = {txt1;txt2;txt3};
         xlab = AX(i,j).XLim;
         ylab = AX(i,j).YLim;
         text(AX(i,j), xlab(2)-(xlab(2)-xlab(1))/3, ylab(2)-(ylab(2)-ylab(1))/10, txt, 'FontSize',8)
