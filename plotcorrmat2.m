@@ -20,7 +20,22 @@ BigAx.YTick = [0.5/size(table2array(tb2plot2),2):1/size(table2array(tb2plot2),2)
 BigAx.YTickLabel = fliplr(tb2plot2.Properties.VariableNames);
 
 % correlation coefficient and p value
-[corrmat, pmat] = corrcoef([table2array(tb2plot1),table2array(tb2plot2)],'rows','complete');
+% the matlab corrcoef function cannot deal with NaN values well
+%[corrmat, pmat] = corrcoef([table2array(tb2plot1),table2array(tb2plot2)],'rows','complete');
+
+% corrmat 
+array2corr = [table2array(tb2plot1),table2array(tb2plot2)];
+corrmat = zeros(size(array2corr,2));
+pmat = zeros(size(array2corr,2));
+
+for i = 1:size(array2corr,2)
+    for j = 1:size(array2corr,2)
+        [r,p] = corrcoef(array2corr(:,i),array2corr(:,j),'rows','complete');
+        corrmat(i,j) = r(1,2);
+        pmat(i,j) = p(1,2);
+    end
+end
+
 
 cmap = colormap(parula);
 cmap = cmap(length(cmap)/2+1:length(cmap),:);
