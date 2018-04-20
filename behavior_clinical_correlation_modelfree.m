@@ -6,7 +6,7 @@ root='D:\Ruonan\Projects in the lab\VA_RA_PTB\Clinical and behavioral';
 % % data=tdfread(filename);
 % tb = readtable(filename);
 
-load(fullfile(root,'all data.mat'));
+load(fullfile(root,'all data_male.mat'));
 
 
 %% include subjects
