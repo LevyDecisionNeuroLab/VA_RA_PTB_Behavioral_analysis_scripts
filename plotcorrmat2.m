@@ -5,7 +5,7 @@ function plotcorrmat2(tb2plot1, tb2plot2)
 screensize = get( groot, 'Screensize' );
 
 figure('Position', [0.35*(screensize(3)-0.85*screensize(4)) 0.07*screensize(4) 0.85*screensize(4) 0.85*screensize(4)])
-[S,AX,BigAx,H,HAx] = plotmatrix(table2array(tb2plot1), table2array(tb2plot2),'.k');
+[S,AX,BigAx,H,HAx] = plotmatrix(table2array(tb2plot1), table2array(tb2plot2),'ok');
 % [S,AX,BigAx,H,HAx] = plotmatrix(table2array(tb2plot));
 
 BigAx.Visible = 'on';

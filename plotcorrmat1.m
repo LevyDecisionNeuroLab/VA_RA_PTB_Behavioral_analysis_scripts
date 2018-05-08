@@ -4,7 +4,7 @@ function plotcorrmat1(tb2plot)
 screensize = get( groot, 'Screensize' );
 
 figure('Position', [0.35*(screensize(3)-0.85*screensize(4)) 0.07*screensize(4) 0.85*screensize(4) 0.85*screensize(4)])
-[S,AX,BigAx,H,HAx] = plotmatrix(table2array(tb2plot),'.k');
+[S,AX,BigAx,H,HAx] = plotmatrix(table2array(tb2plot),'ok');
 % [S,AX,BigAx,H,HAx] = plotmatrix(table2array(tb2plot));
 
 BigAx.Visible = 'on';
@@ -49,7 +49,7 @@ for i = 1:size(table2array(tb2plot),2)
         txt = {txt1;txt2;txt3};
         xlab = AX(i,j).XLim;
         ylab = AX(i,j).YLim;
-        text(AX(i,j), xlab(2)-(xlab(2)-xlab(1))/5, ylab(2)-(ylab(2)-ylab(1))/10, txt, 'FontSize',8)
+        text(AX(i,j), xlab(2)-(xlab(2)-xlab(1))/2.5, ylab(2)-(ylab(2)-ylab(1))/5, txt, 'FontSize',8)
     end
 end
 
