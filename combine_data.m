@@ -52,4 +52,4 @@ tb = join(tb2, tbclinical(ismember(tbclinical.id, subjects),:), 'Keys', {'id'});
 writetable(tb,fullfile(root,'all data.xlsx'));
 
 % save data table
-% save(fullfile(root, 'all data.mat'),'tb');
+save(fullfile(root, 'all data.mat'),'tb');

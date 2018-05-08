@@ -13,4 +13,4 @@ load(fullfile(root,'all data.mat'));
 % only males
 tb = tb(tb.isMale == 1,:);
 
-save 'all data_male.mat' 'tb'
+save(fullfile(root,'all data_male.mat'), 'tb');

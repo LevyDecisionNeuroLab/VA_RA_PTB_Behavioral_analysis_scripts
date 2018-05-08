@@ -7,6 +7,10 @@ root='D:\Ruonan\Projects in the lab\VA_RA_PTB\Clinical and behavioral';
 % tb = readtable(filename);
 
 load(fullfile(root,'all data_male.mat'));
+% load(fullfile(root,'all data.mat'));
+
+%%
+tb2image = tb(tb.isExcluded_imaging == 0 & tb.isGain == 0,:);
 
 %% including
 cluster = {'Re-experiencing','Avoidance','Emotional Numbing','Dysphoric Arousal','Anxious Arousal','Total'};
@@ -17,8 +21,20 @@ domain = {'gain','loss'};
 include = strcmp(tb.group, 'P') & tb.isExcluded_behavior == 0;
 % Include all subjects
 include = (strcmp(tb.group, 'C') | strcmp(tb.group, 'P') | strcmp(tb.group, 'R')) & tb.isExcluded_behavior == 0;
-% Include all subjects
+% Include PTSD and control subjects
 include = (strcmp(tb.group, 'C') | strcmp(tb.group, 'P')) & tb.isExcluded_behavior == 0;
+
+include = tb.isExcluded_behavior == 0;
+
+include_gain = (strcmp(tb.group, 'C') | strcmp(tb.group, 'P')) &...
+    tb.isExcluded_behavior == 0 & tb.isGain == 1;
+
+include_loss = (strcmp(tb.group, 'C') | strcmp(tb.group, 'P')) &...
+    tb.isExcluded_behavior == 0 & tb.isGain == 0;
+
+include_gain = (tb.isExcluded_behavior == 0 & tb.isGain == 1);
+
+include_loss = (tb.isExcluded_behavior == 0 & tb.isGain == 0);
 
 % number of controls
 ncontrol = sum(tb.isGain == 1 & strcmp(tb.group, 'C') & tb.isExcluded_behavior == 0)
@@ -32,25 +48,58 @@ nrptsd = sum(tb.isGain == 1 & strcmp(tb.group, 'R') & tb.isExcluded_behavior == 
 % tb.r = nanmean([tb.r25, tb.r50, tb.r75],2);
 % tb.a_r50 = nanmean([tb.a24_r50, tb.a50_r50, tb.a74_r50],2);
 % save 'all data.mat' 'tb'
+
+%% correlation bwteen behavior scores
+behav2plot = table(tb.alpha_t(include_gain),tb.beta_t(include_gain),...
+    tb.alpha_t(include_loss), tb.beta_t(include_loss),...
+    tb.r(include_gain), tb.a_r50(include_gain),...
+    tb.r(include_loss), tb.a_r50(include_loss),...
+    'VariableNames',{'RGmb','AGmb','RLmb', 'ALmb',...
+                     'RGmf','AGmf','RLmf', 'ALmf'});
+
+plotcorrmat1(behav2plot)
+
+%% create a table for imaging covariates
+
+include_gain = (tb.isExcluded_imaging == 0 & tb.isGain == 1);
+
+include_loss = (tb.isExcluded_imaging == 0 & tb.isGain == 0);
+
+
+tbcov = table(tb.id(include_gain), tb.isExcluded_behavior(include_gain), tb.isExcluded_imaging(include_gain),...
+    tb.R_F_I_PastMonth_(include_gain), tb.A_F_I_PastMonth_(include_gain), tb.N_F_I_PastMonth_(include_gain),...
+    tb.DA_F_I_PastMonth_(include_gain), tb.AA_F_I_PastMonth_(include_gain),...
+    tb.caps_totalscorem(include_gain),...
+    tb.alpha_t(include_gain),tb.beta_t(include_gain),...
+    tb.alpha_t(include_loss), tb.beta_t(include_loss),...
+    tb.r(include_gain), tb.a_r50(include_gain),...
+    tb.r(include_loss), tb.a_r50(include_loss),...
+    'VariableNames',{'id','ExcBehavior','ExcImaging',...
+    'Reex','Avoid','Numb','Dysph','Anx','Total',...
+    'RGmb','AGmb','RLmb', 'ALmb',...
+    'RGmf','AGmf','RLmf', 'ALmf'});
+
+% save tb_cov.mat tbcov                 
+writetable(tbcov,fullfile(root,'covariate_imaging.xlsx'));
 %% Multilinear regression, model based
 % risk gain
-multiTb = tb(tb.isGain == 1 & include, :);
+multiTb = tb(include_gain, :);
 multiLm = fitlm(multiTb, 'alpha_t~R_fi_pm+A_fi_pm+N_fi_pm+DA_fi_pm+AA_fi_pm')
 multiLm = fitlm(multiTb, 'alpha_t~caps_total_lt')
 
 
 % ambig gain
-multiTb = tb(tb.isGain == 1 & include, :);
+multiTb = tb(include_gain, :);
 multiLm = fitlm(multiTb, 'beta_t~R_fi_pm+A_fi_pm+N_fi_pm+DA_fi_pm+AA_fi_pm')
 multiLm = fitlm(multiTb, 'beta_t~caps_total_pm')
 
 % risk loss
-multiTb = tb(tb.isGain == 0 & include, :);
+multiTb = tb(include_loss, :);
 multiLm = fitlm(multiTb, 'alpha_t~R_fi_pm+A_fi_pm+N_fi_pm+DA_fi_pm+AA_fi_pm')
 multiLm = fitlm(multiTb, 'alpha_t~caps_total_pm')
 
 % ambig loss
-multiTb = tb(tb.isGain == 0 & include, :);
+multiTb = tb(include_loss, :);
 multiLm = fitlm(multiTb, 'beta_t~R_fi_pm+A_fi_pm+N_fi_pm+DA_fi_pm+AA_fi_pm')
 multiLm = fitlm(multiTb, 'beta_t~caps_total_lt')
 
@@ -137,22 +186,17 @@ plotcorr(x,y,cluster2plot,[param2plot '-' domain2plot]);
 
 %% correlation matrix
 
-include_gain = (strcmp(tb.group, 'C') | strcmp(tb.group, 'P')) &...
-    tb.isExcluded_behavior == 0 & tb.isGain == 1;
-
-include_loss = (strcmp(tb.group, 'C') | strcmp(tb.group, 'P')) &...
-    tb.isExcluded_behavior == 0 & tb.isGain == 0;
 
 x = tb.caps_total_pm(include_gain);
 y = tb.beta_t(include_loss);
 plotcorr(x,y,'caps','beta loss')
 
 % PTSD measurements
-tb2plot_clinical = table(tb.caps_total_pm(include_gain),tb.pcl5_total(include_gain),...
+tb2plot_clinical = table(tb.caps_totalscorem(include_gain),tb.pcl5_total(include_gain),...
     tb.pclm_total(include_gain), 'VariableNames',{'CAPStotal', 'PCL5','PCLM'});
 
 % caps five factors
-tb2plot_clinical = table(tb.caps_total_pm(include_gain),tb.R_fi_pm(include_gain),...
+tb2plot_clinical = table(tb.caps_totalscorem(include_gain),tb.R_fi_pm(include_gain),...
     tb.A_fi_pm(include_gain), tb.N_fi_pm(include_gain),...
     tb.DA_fi_pm(include_gain), tb.AA_fi_pm(include_gain),...
     'VariableNames',{'Total','Reex','Avoid','Numb','Dysph','Anx'});
@@ -193,7 +237,7 @@ plotcorrmat2(tb2plot_clinical, tb2plot_behav)
 %% partial least square regression (an supervised alternative to principal component regression)
 
 % set up table, risk gain model estimate ~ PC(CAPS, BDI, BAI, CES, Addiction......)
-tb2pls = table(tb.alpha_t(include_gain),tb.caps_total_pm(include_gain),...
+tb2pls = table(tb.alpha_t(include_gain),tb.caps_totalscorem(include_gain),...
     tb.bdiii_total(include_gain), tb.bai_total(include_gain),...
     'VariableNames',{'RiskGain','CAPStotal','BDI', 'BAI'});
 
@@ -201,7 +245,7 @@ tb2pls = table(tb.alpha_t(include_gain),...
     tb.bdiii_total(include_gain), tb.bai_total(include_gain),...
     'VariableNames',{'RiskGain','BDI', 'BAI'});
 
-tb2pls = table(tb.alpha_t(include_gain),tb.caps_total_pm(include_gain),...
+tb2pls = table(tb.alpha_t(include_gain),tb.caps_totalscorem(include_gain),...
     tb.bdiii_total(include_gain),...
     tb.stai_x1_total(include_gain), tb.stai_x2_total(include_gain),...
     tb.bai_total(include_gain),...
