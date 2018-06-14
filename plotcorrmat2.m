@@ -1,11 +1,11 @@
 % plot scatter plot matrix
 
-function plotcorrmat2(tb2plot1, tb2plot2)
+function plotcorrmat2(tb2plot1, tb2plot2, isstat)
 
 screensize = get( groot, 'Screensize' );
 
 figure('Position', [0.35*(screensize(3)-0.85*screensize(4)) 0.07*screensize(4) 0.85*screensize(4) 0.85*screensize(4)])
-[S,AX,BigAx,H,HAx] = plotmatrix(table2array(tb2plot1), table2array(tb2plot2),'ok');
+[S,AX,BigAx,H,HAx] = plotmatrix(table2array(tb2plot1), table2array(tb2plot2),'.k');
 % [S,AX,BigAx,H,HAx] = plotmatrix(table2array(tb2plot));
 
 BigAx.Visible = 'on';
@@ -18,6 +18,7 @@ BigAx.YTickLabelRotation = -90;
 BigAx.YLim = [0 1];
 BigAx.YTick = [0.5/size(table2array(tb2plot2),2):1/size(table2array(tb2plot2),2):1-0.5/size(table2array(tb2plot2),2)];
 BigAx.YTickLabel = fliplr(tb2plot2.Properties.VariableNames);
+BigAx.FontSize = 18;
 
 % correlation coefficient and p value
 % the matlab corrcoef function cannot deal with NaN values well
@@ -51,7 +52,9 @@ for i = 1:size(tb2plot2,2)
         txt = {txt1;txt2;txt3};
         xlab = AX(i,j).XLim;
         ylab = AX(i,j).YLim;
-        text(AX(i,j), xlab(2)-(xlab(2)-xlab(1))/3, ylab(2)-(ylab(2)-ylab(1))/10, txt, 'FontSize',8)
+        if isstat == 1
+            text(AX(i,j), xlab(2)-(xlab(2)-xlab(1))/3, ylab(2)-(ylab(2)-ylab(1))/10, txt, 'FontSize',10)
+        end
     end
 end
 
