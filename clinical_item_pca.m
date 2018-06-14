@@ -7,8 +7,8 @@ logfilename = fullfile(root,'log_allSubj.xlsx');
 errorfilename = fullfile(root, 'error miss_allSubj.xlsx');
 attfilename = fullfile(root, 'par nonpar att_allSubj.xlsx');
 % clinicalfilename = fullfile(root, 'quantitative clinical_allSubj.xlsx');
-clinicalfilename = fullfile(root, 'question items PCA.xlsx');
-
+% clinicalfilename = fullfile(root, 'question items PCA 466.xlsx');
+clinicalfilename = fullfile(root, 'question items PCA 158.xlsx');
 
 tblog = readtable(logfilename);
 tberror = readtable(errorfilename);
@@ -44,20 +44,22 @@ subjects = unique(tb2.id);
 tb = join(tb2, tbclinical(ismember(tbclinical.id, subjects),:), 'Keys', {'id'});
 
 % write the full data table into xlsx file in the root folder
-writetable(tb,fullfile(root,'item_pca_all data.xlsx'));
+writetable(tb,fullfile(root,'item_pca158_all data.xlsx'));
 
 % save data table
-save(fullfile(root, 'item_pca_all data.mat'),'tb');
+save(fullfile(root, 'item_pca158_all data.mat'),'tb');
 
 %% read data
-load(fullfile(root,'item_pca_all data.mat'));
+load(fullfile(root,'item_pca158_all data.mat'));
 
 %% PCA with items
 % exclude subjects becaue of missing a complete questionnaire
-exclude = [3, 117, 50, 1285, 100, 102];
+% exclude = [3, 117, 50, 1285, 100, 102, 1232, 45, 78, 79, 82, 88, 76, 80, 85, 87, 95]; % for item pca 466
+exclude = [117, 1285, 100, 102, 50, 3]; % for item pca 158
+
 include = tb.isExcluded_behavior == 0 & tb.isGain == 1 & tb.isMale == 1 & ~ismember(tb.id,exclude);
 
-tb2pca = tb(include,34:282);
+tb2pca = tb(include,34:size(tb,2));
 
 array2pca = nanzscore(table2array(tb2pca));
 
@@ -70,10 +72,10 @@ tsquared = tsquared1;
 explained = explained1;
 mu = mu1;
 
-% factor analysis
-m = 3; % how many factors
-[lambda,psi,T,stats,F] = factoran(array2pca,m);
-coeff = lambda;
+% % factor analysis
+% m = 3; % how many factors
+% [lambda,psi,T,stats,F] = factoran(array2pca,m);
+% coeff = lambda;
 
 % how many missigng data excluded
 sum(isnan(score(:,1)))
@@ -109,50 +111,148 @@ leg = legend(legendtxt);
 leg.FontSize = 10;
 
 % plot loadings with color differentiate questionnaire
+% color from https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
+
+% 158 items
 for PC = 1:5 % which component to plot
     loadings = coeff(:,PC);
-    figure
+    f = figure('units','normalized','outerposition',[0 0 1 1])
     hold on
     for i = 1:length(loadings)
         h=bar(i,loadings(i));
-        if strcmp(names{i}(1:4),'caps') 
-            set(h,'FaceColor',[230 25 75]/255);
-            hc(1) = h;
-        elseif strcmp(names{i}(1:5),'pcl_m')
-            set(h,'FaceColor',[245 130 48]/255);
+        if strcmp(names{i}(1:3),'ctq')          
+            set(h,'FaceColor',[60 180 75]/255);         % green
+            set(h,'EdgeColor',[60 180 75]/255);         % green   
             hc(2) = h;
-        elseif strcmp(names{i}(1:3),'ctq')
-            set(h,'FaceColor',[60 180 75]/255);
+        elseif strcmp(names{i}(1:3),'ces')          
+            set(h,'FaceColor',[0 130 200]/255);        % blue
+            set(h,'EdgeColor',[0 130 200]/255);        % blue            
             hc(3) = h;
-        elseif strcmp(names{i}(1:3),'ces')
-            set(h,'FaceColor',[0 130 200]/255);
-            hc(4) = h;
-        elseif strcmp(names{i}(1:4),'drri')
-            set(h,'FaceColor',[70 240 240]/255);
-            hc(5) = h;
-        elseif strcmp(names{i}(1:3),'bdi')
-            set(h,'FaceColor',[255 255 25]/255);
-            hc(6) = h;
-        elseif strcmp(names{i}(1:3),'bai')
-            set(h,'FaceColor',[0 0 128]/255);
-            hc(9) = h;
-        elseif strcmp(names{i}(1:4),'ders')
-            set(h,'FaceColor',[240 50 230]/255);
-            hc(10) = h;
         elseif strcmp(names{i}(1:3),'des')
-            set(h,'FaceColor',[230 190 255]/255);
-            hc(11) = h;
+            set(h,'FaceColor',[230 190 255]/255);       % lavender
+            set(h,'EdgeColor',[230 190 255]/255);       % lavender            
+            hc(7) = h;            
+        elseif strcmp(names{i}(1:3),'bdi')
+            set(h,'FaceColor',[255 255 25]/255);        % yellow
+            set(h,'EdgeColor',[255 255 25]/255);        % yellow            
+            hc(4) = h;
+        elseif strcmp(names{i}(1:4),'caps') 
+            set(h,'FaceColor',[230 25 75]/255);         %red
+            set(h,'EdgeColor',[230 25 75]/255);         %red            
+            hc(1) = h;
         elseif strcmp(names{i}(1:6),'staix1')
-            set(h,'FaceColor',[210 245 60]/255);
-            hc(7) = h;
+            set(h,'FaceColor',[210 245 60]/255);        % lime
+            set(h,'EdgeColor',[210 245 60]/255);        % lime            
+            hc(5) = h;
         elseif strcmp(names{i}(1:6),'staix2')
-            set(h,'FaceColor',[128 128 0]/255);
-            hc(8) = h;
+            set(h,'FaceColor',[128 128 0]/255);         % olive
+            set(h,'EdgeColor',[128 128 0]/255);         % olive           
+            hc(6) = h;           
         end
     end
-    legendtxt = {'CAPS','PCLM','CTQ','CES','DRRI','BDI','STAI1','STAI2','BAI','DERS','DES'};
+    legendtxt = {'CAPS','CTQ','CES','BDI','STAI1','STAI2','DES'};
     leg = legend(hc,legendtxt, 'Location', 'northeastoutside');
     leg.FontSize = 10;
     title(['PC' num2str(PC)])
+    ax = gca;
+    ax.XLim = [0,length(loadings)];
     hold off
+    saveas(f,fullfile(root,['PCA 158 items_PC' num2str(PC) ' loadings.bmp']))
+end
+
+
+
+% 466 items
+for PC = 1:5 % which component to plot
+    loadings = coeff(:,PC);
+    f = figure('units','normalized','outerposition',[0 0 1 1])
+    hold on
+    for i = 1:length(loadings)
+        h=bar(i,loadings(i));
+        if strcmp(names{i}(1:3),'ctq')          
+            set(h,'FaceColor',[60 180 75]/255);         % green
+            set(h,'EdgeColor',[60 180 75]/255);         % green   
+            hc(3) = h;
+        elseif strcmp(names{i}(1:3),'ces')          
+            set(h,'FaceColor',[0 130 200]/255);        % blue
+            set(h,'EdgeColor',[0 130 200]/255);        % blue            
+            hc(4) = h;
+        elseif strcmp(names{i}(1:3),'des')
+            set(h,'FaceColor',[230 190 255]/255);       % lavender
+            set(h,'EdgeColor',[230 190 255]/255);       % lavender            
+            hc(11) = h;            
+        elseif strcmp(names{i}(1:3),'fss')
+            set(h,'FaceColor',[250 190 190]/255);       %pink
+            set(h,'EdgeColor',[250 190 190]/255);       %pink            
+            hc(12) = h;  
+        elseif strcmp(names{i}(1:3),'bdi')
+            set(h,'FaceColor',[255 255 25]/255);        % yellow
+            set(h,'EdgeColor',[255 255 25]/255);        % yellow            
+            hc(6) = h;
+        elseif strcmp(names{i}(1:3),'bai')
+            set(h,'FaceColor',[0 0 128]/255);           % navy
+            set(h,'EdgeColor',[0 0 128]/255);           % navy            
+            hc(9) = h;            
+        elseif strcmp(names{i}(1:4),'caps') 
+            set(h,'FaceColor',[230 25 75]/255);         %red
+            set(h,'EdgeColor',[230 25 75]/255);         %red            
+            hc(1) = h;
+        elseif strcmp(names{i}(1:4),'drri')
+            set(h,'FaceColor',[70 240 240]/255);        %cyan
+            set(h,'EdgeColor',[70 240 240]/255);        %cyan            
+            hc(5) = h;
+        elseif strcmp(names{i}(1:4),'ders')
+            set(h,'FaceColor',[240 50 230]/255);        % magenta
+            set(h,'EdgeColor',[240 50 230]/255);        % magenta            
+            hc(10) = h;
+        elseif strcmp(names{i}(1:4),'rses')
+            set(h,'FaceColor',[170 110 40]/255);        %brown
+            set(h,'EdgeColor',[170 110 40]/255);        %brown            
+            hc(13) = h;
+        elseif strcmp(names{i}(1:4),'rloc')
+            set(h,'FaceColor',[145 30 180]/255);        % purple
+            set(h,'EdgeColor',[145 30 180]/255);        % purple          
+            hc(14) = h;
+        elseif strcmp(names{i}(1:4),'bis_')
+            set(h,'FaceColor',[0 128 128]/255);         % Teal
+            set(h,'EdgeColor',[0 128 128]/255);         % Teal            
+            hc(15) = h;     
+        elseif strcmp(names{i}(1:4),'bas_')
+            set(h,'FaceColor',[255 215 180]/255);       %coral
+            set(h,'EdgeColor',[255 215 180]/255);       %coral            
+            hc(16) = h;               
+        elseif strcmp(names{i}(1:5),'bis11')
+            set(h,'FaceColor',[170 255 195]/255);       % mint
+            set(h,'EdgeColor',[170 255 195]/255);       % mint           
+            hc(17) = h;            
+        elseif strcmp(names{i}(1:5),'pcl_m')            
+            set(h,'FaceColor',[245 130 48]/255);        %orange
+            set(h,'EdgeColor',[245 130 48]/255);        %orange            
+            hc(2) = h;
+        elseif strcmp(names{i}(1:6),'staix1')
+            set(h,'FaceColor',[210 245 60]/255);        % lime
+            set(h,'EdgeColor',[210 245 60]/255);        % lime            
+            hc(7) = h;
+        elseif strcmp(names{i}(1:6),'staix2')
+            set(h,'FaceColor',[128 128 0]/255);         % olive
+            set(h,'EdgeColor',[128 128 0]/255);         % olive           
+            hc(8) = h;           
+        elseif strcmp(names{i}(1:10),'dospert_rt')      
+            set(h,'FaceColor',[0 0 0]/255);       % black
+            set(h,'EdgeColor',[0 0 0]/255);       % black            
+            hc(18) = h;
+        elseif strcmp(names{i}(1:10),'dospert_rp')
+            set(h,'FaceColor',[128 128 128]/255);       % grey
+            set(h,'EdgeColor',[128 128 128]/255);       % grey           
+            hc(19) = h; 
+        end
+    end
+    legendtxt = {'CAPS','PCLM','CTQ','CES','DRRI','BDI','STAI1','STAI2','BAI','DERS','DES','FSS','RSES','RLOCS','BIS','BAS','BIS11','DOSPERTrt','DOSPERTrp'};
+    leg = legend(hc,legendtxt, 'Location', 'northeastoutside');
+    leg.FontSize = 10;
+    title(['PC' num2str(PC)])
+    ax = gca;
+    ax.XLim = [0,length(loadings)];
+    hold off
+    saveas(f,fullfile(root,['PCA466 items_PC' num2str(PC) ' loadings.bmp']))
 end
