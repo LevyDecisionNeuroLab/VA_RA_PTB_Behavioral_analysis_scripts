@@ -1,0 +1,1 @@
+# Factor analysis of clinical questionnaire items
