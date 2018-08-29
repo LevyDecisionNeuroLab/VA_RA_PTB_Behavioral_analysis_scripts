@@ -6,6 +6,7 @@ root='D:\Ruonan\Projects in the lab\VA_RA_PTB\Clinical and behavioral';
 % tb = readtable(filename);
 
 load(fullfile(root,'all data.mat'));
+load(fullfile(root,'all data_male.mat'));
 
 % survey = readtable(fullfile(root, 'survey_091517.txt'));
 
@@ -19,6 +20,9 @@ load(fullfile(root,'all data.mat'));
 % risk gain, CC and PTSD
 [p,tbl,stats,terms]=anovan(tb.alpha_t(tb.isExcluded_behavior == 0 & ~strcmp(tb.group, 'R') & tb.isGain==1),{tb.group(tb.isExcluded_behavior == 0 & ~strcmp(tb.group, 'R') & tb.isGain==1 )},'full');
 
+% risk gain, CC and PTSD and RPTSD
+[p,tbl,stats,terms]=anovan(tb.alpha_t(tb.isExcluded_behavior == 0  & tb.isGain==1),{tb.group(tb.isExcluded_behavior == 0  & tb.isGain==1 )},'full');
+
 
 % ambig, all
 [p,tbl,stats,terms]=anovan(tb.beta_t(tb.isExcluded_behavior == 0),{tb.group(tb.isExcluded_behavior == 0);tb.isGain(tb.isExcluded_behavior == 0)},'full');
@@ -31,6 +35,9 @@ load(fullfile(root,'all data.mat'));
 
 % ambig, loss, CC and PTSD
 [p,tbl,stats,terms]=anovan(tb.beta_t(tb.isExcluded_behavior == 0 & tb.isGain==0 & ~strcmp(tb.group, 'R')),{tb.group(tb.isExcluded_behavior == 0 & tb.isGain==0 & ~strcmp(tb.group, 'R')) },'full');
+
+% ambig, loss, CC and PTSD and RPTSD
+[p,tbl,stats,terms]=anovan(tb.beta_t(tb.isExcluded_behavior == 0 & tb.isGain==0 ),{tb.group(tb.isExcluded_behavior == 0 & tb.isGain==0) },'full');
 
 
 % three-way anova

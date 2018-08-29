@@ -8,6 +8,7 @@ root='D:\Ruonan\Projects in the lab\VA_RA_PTB\Clinical and behavioral';
 % tb = readtable(filename);
 
 load(fullfile(root,'all data_male.mat'));
+load(fullfile(root, 'all data.mat'));
 
 % which group to look at
 include = strcmp(tb.group, 'P') & tb.isExcluded_behavior == 0;
@@ -73,7 +74,7 @@ end
 
 % which clinical measurement to plot
 symptomname = 'CAPS';
-symptom = tb2plot.caps_total_pm;
+symptom = tb2plot.caps_totalscorem;
 
 symptomname = 'CES';
 symptom = tb2plot.ces_total;
@@ -87,7 +88,19 @@ symptom = tb2plot.stai_x1_total;
 symptomname = 'STAI2';
 symptom = tb2plot.stai_x2_total;
 
+symptomname = 'KBIT';
+symptom = tb2plot.kbit;
+
+symptomname = 'AGE';
+symptom = tb2plot.age;
+
+
 plotmean = [nanmean(symptom(vccidx));nanmean(symptom(ptsdidx));nanmean(symptom(fptsdidx))];
+
+plotstd = [nanstd(symptom(vccidx));...
+    nanstd(symptom(ptsdidx));...
+    nanstd(symptom(fptsdidx))];
+
 
 plotsem = [nanstd(symptom(vccidx))/sqrt(sum(~isnan(symptom(vccidx))));...
     nanstd(symptom(ptsdidx))/sqrt(sum(~isnan(symptom(ptsdidx))));...
@@ -97,6 +110,7 @@ fighist = figure
 hist(symptom)
 % ax = gca;
 % ax.YLim = [0,0.6];
+% ax.Xlim = [0,110];
 title(symptomname)
 
 fig = figure

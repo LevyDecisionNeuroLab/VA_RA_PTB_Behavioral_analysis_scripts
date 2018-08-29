@@ -73,9 +73,9 @@ explained = explained1;
 mu = mu1;
 
 % % factor analysis
-% m = 3; % how many factors
-% [lambda,psi,T,stats,F] = factoran(array2pca,m);
-% coeff = lambda;
+m = 3; % how many factors
+[lambda,psi,T,stats,F] = factoran(array2pca,m);
+coeff = lambda;
 
 % how many missigng data excluded
 sum(isnan(score(:,1)))
@@ -114,7 +114,7 @@ leg.FontSize = 10;
 % color from https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
 
 % 158 items
-for PC = 1:5 % which component to plot
+for PC = 1:20 % which component to plot
     loadings = coeff(:,PC);
     f = figure('units','normalized','outerposition',[0 0 1 1])
     hold on
@@ -156,6 +156,8 @@ for PC = 1:5 % which component to plot
     title(['PC' num2str(PC)])
     ax = gca;
     ax.XLim = [0,length(loadings)];
+    ax.FontSize = 14;
+    ax.XLabel.String = 'Questionnaire Items';
     hold off
     saveas(f,fullfile(root,['PCA 158 items_PC' num2str(PC) ' loadings.bmp']))
 end
