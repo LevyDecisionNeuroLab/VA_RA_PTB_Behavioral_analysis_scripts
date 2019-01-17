@@ -1,0 +1,223 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+Factor analysis of clinical questionnaire, PTSD data set
+
+```{r}
+rm(list = ls())
+```
+
+
+**LOAD PACKAGE** 
+```{r}
+# psych package
+# install.packages('psych')
+library(psych)
+
+# MVN package for multivariate normality test
+# install.packages("MVN")
+library(MVN)
+
+# nFactors package 
+# install.packages('nFactors')
+library(nFactors)
+
+#install.packages('GPArotation')
+library(GPArotation)
+
+library(ggplot2)
+
+# install.packages("PerformanceAnalytics")
+library(PerformanceAnalytics)
+
+# install.packages('xlsx')
+# library(xlsx)
+```
+
+**LOAD DATA**
+```{r}
+tb = read.csv("D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/question scores EFA_09152018.csv", header = TRUE)
+
+# exclude those who have incomplete data 
+exclude = c(117, 1285, 100, 102, 50, 3) 
+
+# find out who are remitted PTSD
+remitted = tb$id[tb$group=='R']
+
+```
+
+**SELECT SUBJECT**  
+Choice 1. include only control and PTSD, but also include women (should be 59 participants)
+```{r}
+tb2faGain <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 1
+                & !is.element(tb$id,exclude) 
+                & !is.element(tb$id,remitted),]
+
+tb2faLoss <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 0
+                & !is.element(tb$id,exclude) 
+                & !is.element(tb$id,remitted),]
+```
+
+Choice 2. include only control and PTSD, (should be 55 participants)
+```{r}
+tb2faGain <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 1
+                & tb$isMale==1 & !is.element(tb$id,exclude) 
+                & !is.element(tb$id,remitted),]
+
+tb2faLoss <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 0
+                & tb$isMale==1 & !is.element(tb$id,exclude) 
+                & !is.element(tb$id,remitted),]
+```
+
+Choice 3. include control, PTSD, remitted PTSD (should be 69 participants)
+```{r}
+tb2faGain <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 1
+            & tb$isMale==1 & !is.element(tb$id,exclude),]
+
+tb2faLoss <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 0
+                & tb$isMale==1 & !is.element(tb$id,exclude),]
+```
+
+Display column names of data table, make sure to check if the right columns are selected to do PCA
+```{r}
+names(tb2faGain)
+```
+
+**Prepare data for PCA**  
+Organize into a seperate array
+```{r}
+array2fa <- tb2faGain[,c(34:39, 46, 47:49, 54)] # 11 questionnaitre
+colnames(array2fa) = c("BDI", "CAPS-ReExp","CAPS-Avoid","CAPS-Numb","CAPS-DysA","CAPS-AnxA",
+                       "CTQ","STAI-1","STAI-2","CES","DES")
+```
+
+Test multivariate normality
+```{r}
+mvn(array2fa)
+```
+
+Visualize data structure
+```{r}
+cor.plot(array2fa, numbers = TRUE, main="11 Quest Scores", xlas=2)
+chart.Correlation(array2fa,
+                  histogram = TRUE,
+                  method = 'pearson')
+
+# pairs.panels(array2fa,pch='.')
+```
+
+Z-Score
+```{r}
+# generate z-scores for variable A using the scale() function
+zscored <- scale(array2fa, center = TRUE, scale = TRUE)
+
+```
+
+**Do PCA**  
+There are two functions to use, princomp and prcomp
+```{r}
+# pcaresult <- princomp(zscored)
+pcaresult <- prcomp(array2fa, retx = TRUE, center = TRUE, scale. = TRUE)
+summary(pcaresult)
+```
+Plot variance explained
+```{r}
+plot(pcaresult)
+```
+
+Plot loadings
+```{r}
+# plot loadings
+# pcaload <- pcaresult$loadings[,]
+pcaload <- pcaresult$rotation[,]
+barplot(pcaload[,1], main="Component 1", ylab="Loadings", las=2)
+barplot(pcaload[,2], main="Component 2", ylab="Loadings", las=2)
+barplot(pcaload[,3], main="Component 3", ylab="Loadings", las=2)
+
+```
+
+Get rotated values (component scores)
+```{r}
+# rotated values
+score = pcaresult$x
+```
+
+**Save PCA output**  
+Combine component scores into data
+```{r}
+# combine component into data
+tb2faGain$comp1 = score[,1]
+tb2faGain$comp2 = score[,2]
+tb2faGain$comp3 = score[,3]
+
+tb2faLoss$comp1 = score[,1]
+tb2faLoss$comp2 = score[,2]
+tb2faLoss$comp3 = score[,3]
+```
+
+Save data
+```{r}
+# save data
+write.csv(tb2faGain,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score gain_femaleIn_noRemitted_01172019.csv")
+write.csv(tb2faLoss,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score loss_femaleIn_noRemitted_01172019.csv")
+```
+
+**Caculate the components for remitted PTSD subjects**  
+If excluding females
+```{r}
+# select remitted subjects only
+tb2faGainRemitted <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 1
+                        & tb$isMale==1 & !is.element(tb$id,exclude) 
+                        & is.element(tb$id,remitted),]
+
+tb2faLossRemitted <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 0
+                        & tb$isMale==1 & !is.element(tb$id,exclude) 
+                        & is.element(tb$id,remitted),]
+```
+
+If including females
+```{r}
+# select remitted subjects only
+tb2faGainRemitted <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 1
+                        & !is.element(tb$id,exclude) 
+                        & is.element(tb$id,remitted),]
+
+tb2faLossRemitted <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 0
+                        & !is.element(tb$id,exclude) 
+                        & is.element(tb$id,remitted),]
+
+```
+
+Calculate the components
+```{r}
+scoreRemitted = scale(tb2faGainRemitted[,c(34:39, 46, 47:49, 54)], center= pcaresult$center) %*% pcaload
+```
+
+Combine component score into data
+```{r}
+tb2faGainRemitted$comp1 = scoreRemitted[,1]
+tb2faGainRemitted$comp2 = scoreRemitted[,2]
+tb2faGainRemitted$comp3 = scoreRemitted[,3]
+
+tb2faLossRemitted$comp1 = scoreRemitted[,1]
+tb2faLossRemitted$comp2 = scoreRemitted[,2]
+tb2faLossRemitted$comp3 = scoreRemitted[,3]
+
+```
+
+Save data
+```{r}
+
+write.csv(tb2faGainRemitted,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score gain_femaleIn_Remitted_01172019.csv")
+write.csv(tb2faLossRemitted,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score loss_femaleIn_Remitted_01172019.csv")
+
+```
+
+
+
+
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.

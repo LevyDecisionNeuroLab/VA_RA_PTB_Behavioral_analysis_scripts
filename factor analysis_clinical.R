@@ -1,5 +1,6 @@
 # Factor analysis of clinical questionnaire, PTSD data set
 
+# Load packages -----------------------------------------------------------
 # psych package
 # install.packages('psych')
 library(psych)
@@ -15,21 +16,54 @@ library(nFactors)
 #install.packages('GPArotation')
 library(GPArotation)
 
+library(ggplot2)
+
+# install.packages("PerformanceAnalytics")
+library(PerformanceAnalytics)
+
 # install.packages('xlsx')
-library(xlsx)
+# library(xlsx)
 
-# read data
-tb = read.csv("D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/question scores EFA_19082018.csv", header = TRUE)
-exclude = c(117, 1285, 100, 102, 50, 3)
 
+# Load data and select subjects ---------------------------------------------------------------
+
+tb = read.csv("D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/question scores EFA_09152018.csv", header = TRUE)
+
+# exclude those who have incomplete data 
+exclude = c(117, 1285, 100, 102, 50, 3) 
+
+# find out who are remitted PTSD
+remitted = tb$id[tb$group=='R']
+
+# include control, PTSD, remitted PTSD (should be 69 participants)
 tb2faGain <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 1
             & tb$isMale==1 & !is.element(tb$id,exclude),]
 
 tb2faLoss <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 0
                 & tb$isMale==1 & !is.element(tb$id,exclude),]
 
+# include only control and PTSD, (should be 55 participants)
+tb2faGain <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 1
+                & tb$isMale==1 & !is.element(tb$id,exclude) 
+                & !is.element(tb$id,remitted),]
+
+tb2faLoss <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 0
+                & tb$isMale==1 & !is.element(tb$id,exclude) 
+                & !is.element(tb$id,remitted),]
+
+# include only control and PTSD, but also include women (should be 59 participants)
+tb2faGain <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 1
+                & !is.element(tb$id,exclude) 
+                & !is.element(tb$id,remitted),]
+
+tb2faLoss <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 0
+                & !is.element(tb$id,exclude) 
+                & !is.element(tb$id,remitted),]
+
 names(tb2faGain)
 
+
+# Prepare for PCA or factor analysis ---------------------------------------------
 array2fa <- tb2faGain[,c(34:39, 46, 47:49, 54)] # 11 questionnaitre
 colnames(array2fa) = c("BDI", "CAPS-ReExp","CAPS-Avoid","CAPS-Numb","CAPS-DysA","CAPS-AnxA",
                        "CTQ","STAI-1","STAI-2","CES","DES")
@@ -37,25 +71,75 @@ colnames(array2fa) = c("BDI", "CAPS-ReExp","CAPS-Avoid","CAPS-Numb","CAPS-DysA",
 # test multivariate normality
 mvn(array2fa)
 
-############################### Visualize data structure
+# Visualize data structure
 cor.plot(array2fa, numbers = TRUE, main="11 Quest Scores", xlas=2)
+chart.Correlation(array2fa,
+                  histogram = TRUE,
+                  method = 'pearson')
 
-pairs.panels(array2fa,pch='.')
+# pairs.panels(array2fa,pch='.')
 
 
-######## Z-score
+# Z-score
 # generate z-scores for variable A using the scale() function
 zscored <- scale(array2fa, center = TRUE, scale = TRUE)
 
-################################ PCA
-pcaresult <- princomp(zscored)
+# PCA ----------------------------------------------------------------------------
+# pcaresult <- princomp(zscored)
+pcaresult <- prcomp(array2fa, retx = TRUE, center = TRUE, scale. = TRUE)
 summary(pcaresult)
 plot(pcaresult)
 
+# plot loadings
+# pcaload <- pcaresult$loadings[,]
+pcaload <- pcaresult$rotation[,]
+barplot(pcaload[,1], main="Component 1", ylab="Loadings", las=2)
+barplot(pcaload[,2], main="Component 2", ylab="Loadings", las=2)
+barplot(pcaload[,3], main="Component 3", ylab="Loadings", las=2)
 
-################################ exploratory factor analysis using maximum likelihood oblimin rotation
+# rotated values
+score = pcaresult$x
 
-################################ determine the number of factors to extract
+
+# combine component into data
+tb2faGain$comp1 = score[,1]
+tb2faGain$comp2 = score[,2]
+tb2faGain$comp3 = score[,3]
+
+tb2faLoss$comp1 = score[,1]
+tb2faLoss$comp2 = score[,2]
+tb2faLoss$comp3 = score[,3]
+
+# save data
+write.csv(tb2faGain,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score gain_allSubj_10102018.csv")
+write.csv(tb2faLoss,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score loss_allSubj_10102018.csv")
+
+# caculate the components for remitted groups
+tb2faGainRemitted <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 1
+                        & tb$isMale==1 & !is.element(tb$id,exclude) 
+                        & is.element(tb$id,remitted),]
+
+tb2faLossRemitted <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 0
+                        & tb$isMale==1 & !is.element(tb$id,exclude) 
+                        & is.element(tb$id,remitted),]
+
+scoreRemitted = scale(tb2faGainRemitted[,c(34:39, 46, 47:49, 54)], center= pcaresult$center) %*% pcaload
+
+tb2faGainRemitted$comp1 = scoreRemitted[,1]
+tb2faGainRemitted$comp2 = scoreRemitted[,2]
+tb2faGainRemitted$comp3 = scoreRemitted[,3]
+
+tb2faLossRemitted$comp1 = scoreRemitted[,1]
+tb2faLossRemitted$comp2 = scoreRemitted[,2]
+tb2faLossRemitted$comp3 = scoreRemitted[,3]
+
+write.csv(tb2faGainRemitted,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score gain_Remitted_10112018.csv")
+write.csv(tb2faLossRemitted,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score loss_Remitted_10112018.csv")
+
+
+# Exploratory factor analysis ------------------------------------------------------
+
+# determine the number of factors to extract
 ev <- eigen(cor(zscored)) # get eigenvalues
 ap <- parallel(subject=nrow(array2fa),var=ncol(array2fa),
                rep=100,cent=.05)
@@ -71,7 +155,7 @@ plotuScree(ev$values, main=paste(nCNG$nFactors,
                                  'factors retained by the CNG procedure', 
                                  sel = ""))
 
-################################ Factor Analysis
+# Factor Analysis
 # main reference: https://www.statmethods.net/advstats/factor.html
 
 # with varimax rotation
@@ -89,7 +173,7 @@ faresult <- fa(zscored, nfactors=3, rotate="oblimin", impute = "mean",
                fm="ols") # oblimin one of the oblique rotation
 
 faresult <- fa(zscored, nfactors=3, rotate="varimax", impute = "mean",
-               fm="minres") # oblimin one of the oblique rotation
+               fm="minres") # orthogonal rotation
 
 faresult <- fa(zscored, nfactors=1, rotate="oblimin", impute = "mean",
                fm="minres") # oblimin one of the oblique rotation
@@ -123,13 +207,13 @@ weight = faresult$weights
 
 # factor score
 score = faresult$scores
-
   
 # factor score correlation
 score.cor = faresult$score.cor
 score.cor2 = faresult$r.scores
 
-################################################ clinical-behavior analysis with factor scores
+# Save factor scores ----------------------------------------------------------- 
+# clinical-behavior analysis with factor scores
 
 # check if subject id matches
 temp <- cbind(tb2faGain$id, tb2faLoss$id)
@@ -143,58 +227,9 @@ tb2faLoss$factor1 = score[,1]
 tb2faLoss$factor2 = score[,2]
 tb2faLoss$factor3 = score[,3]
 
-write.csv(tb2faGain,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/factor score gain_08272018.csv")
-write.csv(tb2faLoss,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/factor score loss_08272018.csv")
+write.csv(tb2faGain,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/factor score gain_allSubj_orthogonal_10102018.csv")
+write.csv(tb2faLoss,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/factor score loss_allSubj_orthogonal_10102018.csv")
 names(tb2faGain)
 
-# model-based and model-free
-cor.plot(tb2faGain[,c(55:57, 16:17, 21:22)],
-         main = 'Gains',
-         numbers = TRUE,xlas=2)
-
-pairs.panels(tb2faGain[,c(55:57, 16:17, 21:22)],main = 'Gains', pch='.')
 
 
-cor.plot(tb2faLoss[,c(55:57, 16:17, 21:22)],
-         main='Loss',
-         numbers = TRUE,xlas=2)
-
-pairs.panels(tb2faLoss[,c(55:57, 16:17, 21:22)],main='Loss',pch='.')
-
-
-# test for correlation
-corr.test(x=tb2faGain[,c(55:57)],
-          y=tb2faGain[,c(16:17)],
-          use = "pairwise",
-          method = "pearson",
-          adjust = "none",
-          alpha=.05
-          )
-
-corr.test(x=tb2faLoss[,c(55:57)],
-          y=tb2faLoss[,c(16:17)],
-          use = "pairwise",
-          method = "pearson",
-          adjust = "none",
-          alpha=.05
-)
-
-# test for correlation
-corr.test(x=tb2faGain[,c(55:57)],
-          y=tb2faGain[,c(21:22)],
-          use = "pairwise",
-          method = "pearson",
-          adjust = "none",
-          alpha=.05
-)
-
-corr.test(x=tb2faLoss[,c(55:57)],
-          y=tb2faLoss[,c(21:22)],
-          use = "pairwise",
-          method = "pearson",
-          adjust = "none",
-          alpha=.05
-)
-
-# plot correlation matrix
-# https://rstudio-pubs-static.s3.amazonaws.com/240657_5157ff98e8204c358b2118fa69162e18.html
