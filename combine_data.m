@@ -10,7 +10,7 @@ root='D:\Ruonan\Projects in the lab\VA_RA_PTB\Clinical and behavioral';
 % read data
 logfilename = fullfile(root,'log_allSubj.xlsx');
 errorfilename = fullfile(root, 'error miss_allSubj.xlsx');
-attfilename = fullfile(root, 'par nonpar att_allSubj.xlsx');
+attfilename = fullfile(root, 'par nonpar att_allSubj_09152018.xlsx');
 % clinicalfilename = fullfile(root, 'quantitative clinical_allSubj.xlsx');
 clinicalfilename = fullfile(root, 'all clinical_allSubj.xlsx');
 
@@ -49,7 +49,7 @@ subjects = unique(tb2.id);
 tb = join(tb2, tbclinical(ismember(tbclinical.id, subjects),:), 'Keys', {'id'});
 
 % write the full data table into xlsx file in the root folder
-writetable(tb,fullfile(root,'all data.xlsx'));
+writetable(tb,fullfile(root,'all data_09152018.xlsx'));
 
 % save data table
-save(fullfile(root, 'all data.mat'),'tb');
+save(fullfile(root, 'all data_09152018.mat'),'tb');
