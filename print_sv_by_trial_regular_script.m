@@ -21,6 +21,9 @@ value = repmat(valueP,6,1);
 prob = [0.25; 0.5; 0.75; 0.5; 0.5; 0.5];
 ambig = [0; 0; 0; 0.24; 0.5; 0.74];
 
+%% calculate overal choice proportion
+choice_prob = mean([all_data.r25, all_data.r50, all_data.r75, all_data.a24, all_data.a50, all_data.a74],2); 
+
 %% get subject ids
 subject = all_data(all_data.isGain == 1,:).id;
 % subject = [3]; % test for on subject

@@ -20,10 +20,12 @@ library(corrplot)
 # load data (78 subjects)
 tball = read.csv("D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/question scores EFA_09152018.csv", header = TRUE)
 tball = tball[tball$isExcluded_behavior==0,]
-tb = tball[tball$isExcluded_behavior==0 & tball$isMale==1,]
+# tb = tball[tball$isExcluded_behavior==0 & tball$isMale==1,]
+tb = tball[tball$isExcluded_behavior==0,]
 names(tb)
 # exclude remitted (58 subjects)
-tb = tball[tball$isExcluded_behavior==0 & tball$isMale==1 & !tball$group=='R',]
+# tb = tball[tball$isExcluded_behavior==0 & tball$isMale==1 & !tball$group=='R',]
+tb = tball[tball$isExcluded_behavior==0 & !tball$group=='R',]
 
 tb$isGain <- as.factor(tb$isGain)
 tb$group <- as.factor(tb$group)
@@ -49,6 +51,10 @@ names(tb2faLoss)
 tb2faGain = read.csv("D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score gain_noRemitted_10102018.csv", header = TRUE)
 tb2faLoss = read.csv("D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score loss_noRemitted_10102018.csv", header = TRUE)
 
+# load data already PCAed, control and PTSD only including female (59 subjects)
+tb2faGain = read.csv("D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score gain_femaleIn_noRemitted_01172019.csv", header = TRUE)
+tb2faLoss = read.csv("D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score loss_femaleIn_noRemitted_01172019.csv", header = TRUE)
+
 # load data already PCAed, remitted only (14 subjects)
 tb2faGain = read.csv("D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score gain_Remitted_10112018.csv", header = TRUE)
 tb2faLoss = read.csv("D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score loss_Remitted_10112018.csv", header = TRUE)
@@ -56,6 +62,7 @@ tb2faLoss = read.csv("D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behav
 # load data already EFAed, all subjects (69 subjects), orthogonal rotation
 tb2faGain = read.csv("D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/factor score gain_allSubj_orthogonal_10102018.csv", header = TRUE)
 tb2faLoss = read.csv("D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/factor score loss_allSubj_orthogonal_10102018.csv", header = TRUE)
+
 names(tb2faGain)
 names(tb2faLoss)
 
@@ -458,7 +465,7 @@ pairwise.t.test(tbnoRemit[,], g, p.adjust.method = p.adjust.methods,
                 alternative = c("two.sided"),
                 ...)
 
-ambig_anova = ezANOVA(data=tbnoRemit, 
+ambig_anova = ezANOVA(data=tbnoRemit[tbnoRemit$id != 120,], 
                      dv = beta_t,
                      wid = .(id),
                      within = .(isGain),
