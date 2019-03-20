@@ -15,6 +15,59 @@ library(ez)
 # install.packages("corrplot")
 library(corrplot)
 
+library(emmeans)
+
+# install.packages("multcomp")
+library(multcomp)
+
+# install.packages('nlme')
+library(nlme)
+
+# install.packages('lme4')
+library(lme4)
+
+library(cocor)
+
+##### Local functions #####
+
+data_summary <- function(data, varname, groupnames){
+  # Function to calculate the mean and the standard error
+  # for each group
+  #+++++++++++++++++++++++++
+  # data : a data frame
+  # varname : the name of a column containing the variable
+  #to be summariezed
+  # groupnames : vector of column names to be used as
+  # grouping variables
+  
+  require(plyr)
+  summary_func <- function(x, col){
+    c(mean = mean(x[[col]], na.rm=TRUE),
+      sd = sd(x[[col]], na.rm=TRUE)/sqrt(length(x[[col]])))
+  }
+  data_sum<-ddply(data, groupnames, .fun=summary_func,
+                  varname)
+  data_sum <- rename(data_sum, c("mean" = varname))
+  return(data_sum)
+}
+
+
+
+data_meanstd <- function(x) {
+  # Function to produce summary statistics (mean and +/- sd)
+  m <- mean(x)
+  ymin <- m-sd(x)
+  ymax <- m+sd(x)
+  return(c(y=m,ymin=ymin,ymax=ymax))
+}
+
+data_meanse <- function(x) {
+  # Function to produce summary statistics (mean and +/- sd)
+  m <- mean(x)
+  ymin <- m-sd(x)/sqrt(length(x))
+  ymax <- m+sd(x)/sqrt(length(x))
+  return(c(y=m,ymin=ymin,ymax=ymax))
+}
 
 ##### Load data and select subjects ####
 # load data (78 subjects)
@@ -404,10 +457,10 @@ tb$group <- as.factor(tb$group)
 tb$id <- as.factor(tb$id)
 
 ##### model based
-# plot risk attitudes, gain-loss, 2groups-controls and PTSD only
+# risk attitudes, gain-loss, 2groups-controls and PTSD only
 tbnoRemit <- tb[tb$group == 'C'| tb$group == 'P',]
+# bar plot
 tbplot <- data_summary(tbnoRemit,varname="alpha_t",groupnames=c("isGain","group"))
-
 ggplot(data=tbplot,aes(x=isGain, y=alpha_t, fill=group)) + 
   geom_bar(stat="identity", position=position_dodge()) +
   geom_errorbar(aes(ymin=alpha_t-sd, ymax=alpha_t+sd), width=0.2, position=position_dodge(0.9)) +
@@ -416,13 +469,35 @@ ggplot(data=tbplot,aes(x=isGain, y=alpha_t, fill=group)) +
   scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
   labs(title="Model-based Risk Attitude", y = "Transformed Attitude")
 
+# violin plot
+ggplot(tbnoRemit, aes(isGain, y=alpha_t, fill=group)) +
+  geom_violin(trim=FALSE) +
+  stat_summary(fun.data=data_meanstd, geom="pointrange", color = "red",
+               position = position_dodge(0.9)) +
+  scale_fill_brewer(palette="Blues", labels = c("Control","PTSD")) +
+  theme_classic() +
+  scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
+  labs(title="Model-based Risk Attitude", y = "Transformed Attitude")
+
+  
 # plot ambig attitudes, gain-loss, 2groups-control and PTSD only
 tbnoRemit <- tb[tb$group == 'C'| tb$group == 'P',]
-tbplot <- data_summary(tbnoRemit,varname="beta_t",groupnames=c("isGain","group"))
 
+# bar plot
+tbplot <- data_summary(tbnoRemit,varname="beta_t",groupnames=c("isGain","group"))
 ggplot(data=tbplot,aes(x=isGain, y=beta_t, fill=group)) + 
   geom_bar(stat="identity", position=position_dodge()) +
   geom_errorbar(aes(ymin=beta_t-sd, ymax=beta_t+sd), width=0.2, position=position_dodge(0.9)) +
+  scale_fill_brewer(palette="Reds", labels = c("Control","PTSD")) +
+  theme_classic() +
+  scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
+  labs(title="Model-based Ambiguity Attitude", y = "Transformed Attitude")
+
+# violin plot
+ggplot(tbnoRemit, aes(x=isGain, y=beta_t, fill=group)) +
+  geom_violin(trim=FALSE) +
+  stat_summary(fun.data=data_meanstd, geom="pointrange", color = "red",
+               position = position_dodge(0.9)) +
   scale_fill_brewer(palette="Reds", labels = c("Control","PTSD")) +
   theme_classic() +
   scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
@@ -623,23 +698,3 @@ print(test1, digits = 4)
 ##### Reference #####
 # plot correlation matrix
 # https://rstudio-pubs-static.s3.amazonaws.com/240657_5157ff98e8204c358b2118fa69162e18.html
-##### Local functions ####
-##### Function to calculate the mean and the standard deviation #####
-# for each group
-#+++++++++++++++++++++++++
-# data : a data frame
-# varname : the name of a column containing the variable
-#to be summariezed
-# groupnames : vector of column names to be used as
-# grouping variables
-data_summary <- function(data, varname, groupnames){
-  require(plyr)
-  summary_func <- function(x, col){
-    c(mean = mean(x[[col]], na.rm=TRUE),
-      sd = sd(x[[col]], na.rm=TRUE)/sqrt(length(x[[col]])))
-  }
-  data_sum<-ddply(data, groupnames, .fun=summary_func,
-                  varname)
-  data_sum <- rename(data_sum, c("mean" = varname))
-  return(data_sum)
-}
