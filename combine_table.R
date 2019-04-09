@@ -56,24 +56,6 @@ par_log_error <- merge(par_log, error_day12, by = intersect(names(par_log), name
 tb <- merge(par_log_error, pca, by=intersect(names(par_log_error), names(pca)))
 
 
-
-
-
-# calculate model-free, and transformed score
-tb$r <- rowMeans(cbind(tb$r25, tb$r50, tb$r75))
-tb$a <- rowMeans(cbind(tb$a24, tb$a50, tb$a74))
-tb$a_r50 <- tb$a - tb$r50
-
-tb$alpha_t = tb$alpha - 1
-tb$alpha_t[tb$isGain==0] = -tb$alpha_t[tb$isGain==0]
-tb$beta_t= -tb$beta
-tb$beta_t[tb$isGain==0] = -tb$beta_t[tb$isGain==0]
-
-tb$isGain <- as.factor(tb$isGain)
-tb$group <- as.factor(tb$group)
-tb$id <- as.factor(tb$id)
-tb$isDay1 <- as.factor(tb$isDay1)
-
 # sort 
 tb_sorted<- tb[
   with(tb, order(isGain, id)),
@@ -83,6 +65,24 @@ tb_sorted<- tb[
   with(tb, order(isDay1, isGain, id)),
   ]
 
+
+# calculate model-free, and transformed score
+tb_sorted$r <- rowMeans(cbind(tb_sorted$r25, tb_sorted$r50, tb_sorted$r75))
+tb_sorted$a <- rowMeans(cbind(tb_sorted$a24, tb_sorted$a50, tb_sorted$a74))
+tb_sorted$a_r50 <- tb_sorted$a - tb_sorted$r50
+
+tb_sorted$alpha_t = tb_sorted$alpha - 1
+tb_sorted$alpha_t[tb_sorted$isGain==0] = -tb_sorted$alpha_t[tb_sorted$isGain==0]
+tb_sorted$beta_t= -tb_sorted$beta
+tb_sorted$beta_t[tb_sorted$isGain==0] = -tb_sorted$beta_t[tb_sorted$isGain==0]
+
+tb_sorted$isGain <- as.factor(tb_sorted$isGain)
+tb_sorted$group <- as.factor(tb_sorted$group)
+tb_sorted$id <- as.factor(tb_sorted$id)
+tb_sorted$isDay1 <- as.factor(tb_sorted$isDay1)
+
+
 tball <- tb_sorted
 # save data frame
 save(tball, file = "data_all_noPCA_day1day2_04092019.rda")
+save(tball, file = "data_all_day1day2_04082019.rda")
