@@ -70,18 +70,30 @@ data_meanse <- function(x) {
 }
 
 ##### Load data and select subjects ####
-# load data (78 subjects)
-tball = read.csv("D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/question scores EFA_09152018.csv", header = TRUE)
-tball = tball[tball$isExcluded_behavior==0,]
-# tb = tball[tball$isExcluded_behavior==0 & tball$isMale==1,]
+
+path <- "D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral"
+setwd(path)
+load('data_all_noPCA_day1day2_04092019.rda')
+load('data_all_noPCA_04092019.rda')
+load('data_all_04082019.rda')
+load('data_all_day1day2_04082019.rda')
+
 tb = tball[tball$isExcluded_behavior==0,]
-names(tb)
-# exclude remitted (58 subjects)
-# tb = tball[tball$isExcluded_behavior==0 & tball$isMale==1 & !tball$group=='R',]
 tb = tball[tball$isExcluded_behavior==0 & !tball$group=='R',]
 
-tb$isGain <- as.factor(tb$isGain)
-tb$group <- as.factor(tb$group)
+names(tb)
+
+# load data (78 subjects)
+# tball = read.csv("D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/question scores EFA_09152018.csv", header = TRUE)
+#tball = tball[tball$isExcluded_behavior==0,]
+# tb = tball[tball$isExcluded_behavior==0 & tball$isMale==1,]
+
+# exclude remitted (58 subjects)
+# tb = tball[tball$isExcluded_behavior==0 & tball$isMale==1 & !tball$group=='R',]
+
+
+# tb$isGain <- as.factor(tb$isGain)
+# tb$group <- as.factor(tb$group)
 describeBy(tball[tball$isGain == 1,], group = tball[tball$isGain == 1,]$group)
 
 # load data already EFAed (69 subjects), oblimin rotation
@@ -119,6 +131,203 @@ tb2faLoss = read.csv("D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behav
 names(tb2faGain)
 names(tb2faLoss)
 
+
+##### select day ####
+# day1
+tb <- tball[tball$isExcluded_behavior==0 & tball$isDay1 == 1,]
+# day2
+tb <- tball[tball$isExcluded_behavior==0 & tball$isDay1 == 0,]
+
+##### Compare between day1 day2 #####
+  ##### reorganize data ####
+tb_day1 <- tb[tb$isDay1==1, ]
+tb_day2 <- tb[tb$isDay1==0, ]
+names(tb_day1)
+names(tb_day2)
+
+colnames(tb_day1)[c(4:16,25:30)]<-c('alpha_day1', 'beta_day1',  'gamma_day1',
+                                   'r2_day1', 'LL_day1', 'AIC_day1', 'BIC_day1',
+                                   'r25_day1', 'r50_day1', 'r75_day1', 'a24_day1',  
+                                   'a50_day1', 'a74_day1', 'error_day1',
+                                   'r_day1', 'a_day1', 'a_r50_day1', 
+                                   'alpha_t_day1', 'beta_t_day1')
+
+colnames(tb_day2)[c(4:16,25:30)]<-c('alpha_day2', 'beta_day2',  'gamma_day2',
+                                    'r2_day2', 'LL_day2', 'AIC_day2', 'BIC_day2',
+                                    'r25_day2', 'r50_day2', 'r75_day2', 'a24_day2',  
+                                    'a50_day2', 'a74_day2', 'error_day2',
+                                    'r_day2', 'a_day2', 'a_r50_day2', 
+                                    'alpha_t_day2', 'beta_t_day2')
+tb_day1$isDay1 <- NULL
+tb_day2$isDay1 <- NULL
+
+tb_day12 <- merge(tb_day1, tb_day2, by = intersect(names(tb_day1), names(tb_day2)))
+
+# sort
+tb_day12 <- tb_day12[with(tb_day12, order(isGain, id)),]
+
+# calculate day difference
+tb_day12$alaph_t_d <- tb_day12$alpha_t_day2 - tb_day12$alpha_t_day1
+tb_day12$beta_t_d <- tb_day12$beta_t_day2 - tb_day12$beta_t_day1
+tb_day12$r_d <- tb_day12$r_day2 - tb_day12$r_day1
+tb_day12$a_r50_d <- tb_day12$a_r50_day2 - tb_day12$a_r50_day1
+
+
+  ##### correlation #####
+group2plot = 'C'
+tb_day12_plot = tb_day12[tb_day12$group == group2plot,]
+
+# gain
+ggplot(tb_day12_plot[tb_day12_plot$isGain==1, ], aes(x=alpha_t_day1, y=alpha_t_day2)) + 
+  geom_point(size=2) +
+  theme_classic() +
+  labs(title=paste(group2plot, ", Model-based Risk Attitude, gain"))
+
+ggplot(tb_day12_plot[tb_day12_plot$isGain==1, ], aes(x=beta_t_day1, y=beta_t_day2)) + 
+  geom_point(size=2) +
+  theme_classic() +
+  labs(title=paste(group2plot, ", Model-based Ambig Attitude, gain"))
+
+ggplot(tb_day12_plot[tb_day12_plot$isGain==1, ], aes(x=r_day1, y=r_day2)) + 
+  geom_point(size=2) +
+  theme_classic() +
+  labs(title=paste(group2plot, ", Model-free risk Attitude, gain"))
+
+ggplot(tb_day12_plot[tb_day12_plot$isGain==1, ], aes(x=a_r50_day1, y=a_r50_day2)) + 
+  geom_point(size=2) +
+  theme_classic() +
+  labs(title=paste(group2plot, ", Model-free ambig Attitude, gain"))
+
+# loss
+ggplot(tb_day12_plot[tb_day12_plot$isGain==0, ], aes(x=alpha_t_day1, y=alpha_t_day2)) + 
+  geom_point(size=2) +
+  theme_classic() +
+  labs(title=paste(group2plot, ", Model-based risk Attitude, loss"))
+
+ggplot(tb_day12_plot[tb_day12_plot$isGain==0, ], aes(x=beta_t_day1, y=beta_t_day2)) + 
+  geom_point(size=2) +
+  theme_classic() +
+  labs(title=paste(group2plot, ", Model-based ambig Attitude, loss"))
+
+ggplot(tb_day12_plot[tb_day12_plot$isGain==0, ], aes(x=r_day1, y=r_day2)) + 
+  geom_point(size=2) +
+  theme_classic() +
+  labs(title=paste(group2plot, ", Model-free risk Attitude, loss"))
+
+ggplot(tb_day12_plot[tb_day12_plot$isGain==0, ], aes(x=a_r50_day1, y=a_r50_day2)) + 
+  geom_point(size=2) +
+  theme_classic() +
+  labs(title=paste(group2plot, ", Model-free ambig Attitude, loss"))
+
+
+  ##### difference between day1 day2
+
+  ##### compare days means  #####
+# bar plot, model based risk
+group2plot = 'R'
+tb_group <- tb[tb$group == group2plot,]
+tb_group <- tb
+
+tbplot <- data_summary(tb_group,varname="alpha_t",groupnames=c("isGain","isDay1"))
+ggplot(data=tbplot,aes(x=isGain, y=alpha_t, fill=isDay1)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=alpha_t-sd, ymax=alpha_t+sd), width=0.2, position=position_dodge(0.9)) +
+  scale_fill_brewer(palette="Blues", labels = c("Day2","Day1")) +
+  theme_classic() +
+  scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
+  labs(title=paste(group2plot, "Model-based Risk Attitude"), y = "Transformed Attitude")
+
+# violin plot
+ggplot(tb_group, aes(isGain, y=alpha_t, fill=isDay1)) +
+  geom_violin(trim=FALSE) +
+  stat_summary(fun.data=data_meanstd, geom="pointrange", color = "red",
+               position = position_dodge(0.9)) +
+  scale_fill_brewer(palette="Blues", labels = c("Day2","Day1")) +
+  theme_classic() +
+  scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
+  labs(title=paste(group2plot, "Model-based Risk Attitude"), y = "Transformed Attitude")
+
+# bar plot, model based ambiguity
+group2plot = 'R'
+tb_group <- tb[tb$group == group2plot,]
+tb_group <- tb
+
+tbplot <- data_summary(tb_group,varname="beta_t",groupnames=c("isGain","isDay1"))
+ggplot(data=tbplot,aes(x=isGain, y=beta_t, fill=isDay1)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=beta_t-sd, ymax=beta_t+sd), width=0.2, position=position_dodge(0.9)) +
+  scale_fill_brewer(palette="Reds", labels = c("Day2","Day1")) +
+  theme_classic() +
+  scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
+  labs(title=paste(group2plot, "Model-based Amb Attitude"), y = "Transformed Attitude")
+
+# violin plot
+ggplot(tb_group, aes(isGain, y=beta_t, fill=isDay1)) +
+  geom_violin(trim=FALSE) +
+  stat_summary(fun.data=data_meanstd, geom="pointrange", color = "red",
+               position = position_dodge(0.9)) +
+  scale_fill_brewer(palette="Reds", labels = c("Day2","Day1")) +
+  theme_classic() +
+  scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
+  labs(title=paste(group2plot, "Model-based Amb Attitude"), y = "Transformed Attitude")
+
+# barplot model free risk
+group2plot = 'R'
+tb_group <- tb[tb$group == group2plot,]
+tb_group <- tb
+
+tbplot <- data_summary(tb_group,varname="r",groupnames=c("isGain","isDay1"))
+ggplot(data=tbplot,aes(x=isGain, y=r, fill=isDay1)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=r-sd, ymax=r+sd), width=0.2, position=position_dodge(0.9)) +
+  scale_fill_brewer(palette="Blues", labels = c("Day2","Day1")) +
+  theme_classic() +
+  scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
+  labs(title=paste(group2plot, "Model-free Risk Attitude"), y = "Choice proportion")
+
+# violin plot
+ggplot(tb_group, aes(isGain, y=r, fill=isDay1)) +
+  geom_violin(trim=FALSE) +
+  stat_summary(fun.data=data_meanstd, geom="pointrange", color = "red",
+               position = position_dodge(0.9)) +
+  scale_fill_brewer(palette="Blues", labels = c("Day2","Day1")) +
+  theme_classic() +
+  scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
+  labs(title=paste(group2plot, "Model-free Risk Attitude"), y = "Choice proportion")
+
+# bar plot, model free ambiguity
+group2plot = 'R'
+tb_group <- tb[tb$group == group2plot,]
+tb_group <- tb
+
+tbplot <- data_summary(tb_group,varname="a_r50",groupnames=c("isGain","isDay1"))
+ggplot(data=tbplot,aes(x=isGain, y=a_r50, fill=isDay1)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=a_r50-sd, ymax=a_r50+sd), width=0.2, position=position_dodge(0.9)) +
+  scale_fill_brewer(palette="Reds", labels = c("Day2","Day1")) +
+  theme_classic() +
+  scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
+  labs(title=paste(group2plot, "Model-free Amb Attitude"), y = "Choice proportion")
+
+# violin plot
+ggplot(tb_group, aes(isGain, y=a_r50, fill=isDay1)) +
+  geom_violin(trim=FALSE) +
+  stat_summary(fun.data=data_meanstd, geom="pointrange", color = "red",
+               position = position_dodge(0.9)) +
+  scale_fill_brewer(palette="Reds", labels = c("Day2","Day1")) +
+  theme_classic() +
+  scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
+  labs(title=paste(group2plot, "Model-free Amb Attitude"), y = "Choice proportion")
+
+
+  ##### histrogram of day difference #####
+group2plot = 'P'
+domain2plot = 0 # 1-gain, 0-loss
+ggplot(tb_day12[tb_day12$isGain == domain2plot & tb_day12$group == group2plot, ], aes(x = beta_t_d)) +
+  geom_histogram()
+
+ggplot(tb_day12[tb_day12$isGain == domain2plot & tb_day12$group == group2plot, ], aes(x = a_r50_d)) +
+  geom_histogram()
 
 ##### Correlation analysis ##### 
 ##### correlation between attitudes #####
@@ -452,11 +661,15 @@ corr.test(x=tb2faLoss[,c(55:57)],
 
 
 ##### Group analysis #####
-tb$isGain <- as.factor(tb$isGain)
-tb$group <- as.factor(tb$group)
-tb$id <- as.factor(tb$id)
+# tb$isGain <- as.factor(tb$isGain)
+# tb$group <- as.factor(tb$group)
+# tb$id <- as.factor(tb$id)
+# count subject
+sum(tb$group == 'C')/2
+sum(tb$group == 'P')/2
+sum(tb$group == 'R')/2
 
-##### model based
+  ##### model based #####
 # risk attitudes, gain-loss, 2groups-controls and PTSD only
 tbnoRemit <- tb[tb$group == 'C'| tb$group == 'P',]
 # bar plot
@@ -514,6 +727,14 @@ risk_anova = ezANOVA(data=tbnoRemit,
 )
 risk_anova
 TukeyHSD(risk_anova$aov)
+
+rt = ezBoot(
+  data=tbnoRemit,
+  dv = 'alpha_t',
+  wid = 'id',
+  within = 'isGain',
+  between = 'group'
+)
 
 t.test(tbnoRemit[tbnoRemit$group=='C' & tbnoRemit$isGain==1,]$alpha_t,
        mu = 0)
@@ -574,7 +795,75 @@ ggplot(data=tbplot,aes(x=isGain, y=beta_t, fill=group)) +
   scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
   labs(title="Model-based Ambiguity Attitude", y = "Transformed Attitude")
 
-##### model free
+  ##### model free #####
+# risk attitudes, gain-loss, 2groups-controls and PTSD only
+tbnoRemit <- tb[tb$group == 'C'| tb$group == 'P',]
+# bar plot
+tbplot <- data_summary(tbnoRemit,varname="r",groupnames=c("isGain","group"))
+ggplot(data=tbplot,aes(x=isGain, y=r, fill=group)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=r-sd, ymax=r+sd), width=0.2, position=position_dodge(0.9)) +
+  scale_fill_brewer(palette="Blues", labels = c("Control","PTSD")) +
+  theme_classic() +
+  scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
+  labs(title="Model-free Risk Attitude", y = "Choice Proportion")
+
+# violin plot
+ggplot(tbnoRemit, aes(isGain, y=r, fill=group)) +
+  geom_violin(trim=FALSE) +
+  stat_summary(fun.data=data_meanstd, geom="pointrange", color = "red",
+               position = position_dodge(0.9)) +
+  scale_fill_brewer(palette="Blues", labels = c("Control","PTSD")) +
+  theme_classic() +
+  scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
+  labs(title="Model-free Risk Attitude", y = "Choice proportion")
+
+
+# plot ambig attitudes, gain-loss, 2groups-control and PTSD only
+tbnoRemit <- tb[tb$group == 'C'| tb$group == 'P',]
+
+# bar plot
+tbplot <- data_summary(tbnoRemit,varname="a_r50",groupnames=c("isGain","group"))
+ggplot(data=tbplot,aes(x=isGain, y=a_r50, fill=group)) + 
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=a_r50-sd, ymax=a_r50+sd), width=0.2, position=position_dodge(0.9)) +
+  scale_fill_brewer(palette="Reds", labels = c("Control","PTSD")) +
+  theme_classic() +
+  scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
+  labs(title="Model-free Ambiguity Attitude", y = "Choice Proportion")
+
+# violin plot
+ggplot(tbnoRemit, aes(x=isGain, y=a_r50, fill=group)) +
+  geom_violin(trim=FALSE) +
+  stat_summary(fun.data=data_meanstd, geom="pointrange", color = "red",
+               position = position_dodge(0.9)) +
+  scale_fill_brewer(palette="Reds", labels = c("Control","PTSD")) +
+  theme_classic() +
+  scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
+  labs(title="Model-free Ambiguity Attitude", y = "Choice Proportion")
+
+# Anova
+risk_anova = ezANOVA(data=tbnoRemit, 
+                     dv = r,
+                     wid = .(id),
+                     within = .(isGain),
+                     between = .(group),
+                     type = 3,
+                     detailed = TRUE,
+                     return_aov = TRUE
+)
+risk_anova
+
+ambig_anova = ezANOVA(data=tbnoRemit, 
+                     dv = a_r50,
+                     wid = .(id),
+                     within = .(isGain),
+                     between = .(group),
+                     type = 3,
+                     detailed = TRUE,
+                     return_aov = TRUE
+)
+ambig_anova
 # plot risk attitudes, gain-loss, 3groups
 tbplot <- data_summary(tb,varname="r",groupnames=c("isGain","group"))
 
