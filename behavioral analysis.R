@@ -145,6 +145,7 @@ tb_day2 <- tb[tb$isDay1==0, ]
 names(tb_day1)
 names(tb_day2)
 
+# CAREFUL, data without PCA
 colnames(tb_day1)[c(4:16,25:30)]<-c('alpha_day1', 'beta_day1',  'gamma_day1',
                                    'r2_day1', 'LL_day1', 'AIC_day1', 'BIC_day1',
                                    'r25_day1', 'r50_day1', 'r75_day1', 'a24_day1',  
@@ -158,6 +159,22 @@ colnames(tb_day2)[c(4:16,25:30)]<-c('alpha_day2', 'beta_day2',  'gamma_day2',
                                     'a50_day2', 'a74_day2', 'error_day2',
                                     'r_day2', 'a_day2', 'a_r50_day2', 
                                     'alpha_t_day2', 'beta_t_day2')
+
+# CAREFUL, data with PCA
+colnames(tb_day1)[c(4:16,25,50:54)]<-c('alpha_day1', 'beta_day1',  'gamma_day1',
+                                    'r2_day1', 'LL_day1', 'AIC_day1', 'BIC_day1',
+                                    'r25_day1', 'r50_day1', 'r75_day1', 'a24_day1',  
+                                    'a50_day1', 'a74_day1', 'error_day1',
+                                    'r_day1', 'a_day1', 'a_r50_day1', 
+                                    'alpha_t_day1', 'beta_t_day1')
+
+colnames(tb_day2)[c(4:16,25,50:54)]<-c('alpha_day2', 'beta_day2',  'gamma_day2',
+                                    'r2_day2', 'LL_day2', 'AIC_day2', 'BIC_day2',
+                                    'r25_day2', 'r50_day2', 'r75_day2', 'a24_day2',  
+                                    'a50_day2', 'a74_day2', 'error_day2',
+                                    'r_day2', 'a_day2', 'a_r50_day2', 
+                                    'alpha_t_day2', 'beta_t_day2')
+
 tb_day1$isDay1 <- NULL
 tb_day2$isDay1 <- NULL
 
@@ -321,6 +338,27 @@ ggplot(tb_group, aes(isGain, y=a_r50, fill=isDay1)) +
   labs(title=paste(group2plot, "Model-free Amb Attitude"), y = "Choice proportion")
 
 
+  ##### Correlateion between att change and symptom ####
+group2plot = c('P', 'C')
+domain2plot = 0 # 1-gain, 0-loss
+tb_day12_plot = tb_day12[tb_day12$isGain == domain2plot & is.element(tb_day12$group, group2plot), ]
+
+# what to plot
+x2plot = 'comp1'
+y2plot = 'beta_t_d'
+  
+# plot
+ggplot(tb_day12_plot, aes(x = eval(parse(text = x2plot)),
+                          y = eval(parse(text = y2plot)),
+                          color = group)) +
+  geom_point(size=2) +
+  theme_classic() +
+  ggtitle(paste('Domain isGain = ', domain2plot)) +
+  xlab(x2plot) + ylab (y2plot) +
+  theme(title = element_text(size = 8))
+
+
+
   ##### histrogram of change in variables #####
 group2plot = c('P', 'C')
 domain2plot = 0 # 1-gain, 0-loss
@@ -336,6 +374,25 @@ ggplot(tb_day12_plot, aes(x = beta_t_d, color = group, fill = group)) +
   labs(title = paste('Domain isGain:', domain2plot, 'Model-based ambig att change')) +
   theme(title = element_text(size = 10))
 
+ac_anova = ezANOVA(data=tb_day12_plot, 
+                   dv = beta_t_d,
+                   wid = .(id),
+                   between = .(group),
+                   type = 3,
+                   detailed = TRUE,
+                   return_aov = TRUE
+)
+ac_anova
+
+ac_anova = ezANOVA(data=tb_day12_plot, 
+                   dv = a_r50_d,
+                   wid = .(id),
+                   between = .(group),
+                   type = 3,
+                   detailed = TRUE,
+                   return_aov = TRUE
+)
+ac_anova
 # model free ambig
 mu <- ddply(tb_day12_plot, "group", summarise, grp.mean=mean(a_r50_d))
 ggplot(tb_day12_plot, aes(x = a_r50_d, color = group, fill = group)) +
