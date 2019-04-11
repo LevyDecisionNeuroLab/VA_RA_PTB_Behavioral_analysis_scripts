@@ -371,7 +371,37 @@ group2plot = c('P', 'C')
 domain2plot = 0 # 1-gain, 0-loss
 tb_day12_plot = tb_day12[tb_day12$isGain == domain2plot & is.element(tb_day12$group, group2plot), ]
 
+# model based ambig
+ggplot(tb_day12_plot, aes(x = group, y = beta_t_d, fill = group)) + 
+  # geom_violin(size=1) + # trimed
+  geom_violin(trim=FALSE, size=1) + # not trimed
+  # scale_fill_manual(values = c("gray 90", "gray55")) +
+  stat_summary(fun.data=data_meanstd, geom="pointrange", color = "red", position = position_dodge(0.9)) +
+  # geom_boxplot(width = 0.1) + # add box plot
+  # scale_y_continuous(limits=c(-2, 2), breaks = c(-2.0, -1.0, 0.0, 1.0, 2.0)) +
+  theme_classic() +
+  theme(axis.line = element_line(size = 1)) +
+  theme(axis.ticks = element_line(size = 1, color = "black")) +
+  theme(axis.text = element_text(size = 16, color = "black")) +
+  ggtitle("Model-based ambig att change") + xlab("") + ylab("Transformed attitue") +
+  theme(axis.title.y=element_text(size = 14)) +
+  theme(axis.title = element_text(size = 16))
 
+# model free ambig
+ggplot(tb_day12_plot, aes(x = group, y = a_r50_d, fill = group)) + 
+  # geom_violin(size=1) + # trimed
+  geom_violin(trim=FALSE, size=1) + # not trimed
+  # scale_fill_manual(values = c("gray 90", "gray55")) +
+  stat_summary(fun.data=data_meanstd, geom="pointrange", color = "red", position = position_dodge(0.9)) +
+  # geom_boxplot(width = 0.1) + # add box plot
+  # scale_y_continuous(limits=c(-2, 2), breaks = c(-2.0, -1.0, 0.0, 1.0, 2.0)) +
+  theme_classic() +
+  theme(axis.line = element_line(size = 1)) +
+  theme(axis.ticks = element_line(size = 1, color = "black")) +
+  theme(axis.text = element_text(size = 16, color = "black")) +
+  ggtitle("Model-free ambig att change") + xlab("") + ylab("Choice proportion") +
+  theme(axis.title.y=element_text(size = 14)) +
+  theme(axis.title = element_text(size = 16))
 
 ##### Correlation analysis ##### 
 ##### correlation between attitudes #####
