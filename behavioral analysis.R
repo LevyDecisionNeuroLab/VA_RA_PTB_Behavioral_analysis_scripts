@@ -167,14 +167,15 @@ tb_day12 <- merge(tb_day1, tb_day2, by = intersect(names(tb_day1), names(tb_day2
 tb_day12 <- tb_day12[with(tb_day12, order(isGain, id)),]
 
 # calculate day difference
-tb_day12$alaph_t_d <- tb_day12$alpha_t_day2 - tb_day12$alpha_t_day1
+tb_day12$alpha_t_d <- tb_day12$alpha_t_day2 - tb_day12$alpha_t_day1
 tb_day12$beta_t_d <- tb_day12$beta_t_day2 - tb_day12$beta_t_day1
 tb_day12$r_d <- tb_day12$r_day2 - tb_day12$r_day1
 tb_day12$a_r50_d <- tb_day12$a_r50_day2 - tb_day12$a_r50_day1
-
+tb_day12$error_d <- tb_day12$error_day2 - tb_day12$error_day1
+tb_day12$r2_d <- tb_day12$r2_day2 - tb_day12$r2_day1
 
   ##### correlation #####
-group2plot = 'C'
+group2plot = 'P'
 tb_day12_plot = tb_day12[tb_day12$group == group2plot,]
 
 # gain
@@ -220,7 +221,7 @@ ggplot(tb_day12_plot[tb_day12_plot$isGain==0, ], aes(x=a_r50_day1, y=a_r50_day2)
   labs(title=paste(group2plot, ", Model-free ambig Attitude, loss"))
 
 
-  ##### difference between day1 day2
+  ##### difference between day1 day2 ####
 
   ##### compare days means  #####
 # bar plot, model based risk
@@ -320,14 +321,57 @@ ggplot(tb_group, aes(isGain, y=a_r50, fill=isDay1)) +
   labs(title=paste(group2plot, "Model-free Amb Attitude"), y = "Choice proportion")
 
 
-  ##### histrogram of day difference #####
-group2plot = 'P'
+  ##### histrogram of change in variables #####
+group2plot = c('P', 'C')
 domain2plot = 0 # 1-gain, 0-loss
-ggplot(tb_day12[tb_day12$isGain == domain2plot & tb_day12$group == group2plot, ], aes(x = beta_t_d)) +
-  geom_histogram()
+tb_day12_plot = tb_day12[tb_day12$isGain == domain2plot & is.element(tb_day12$group, group2plot), ]
 
-ggplot(tb_day12[tb_day12$isGain == domain2plot & tb_day12$group == group2plot, ], aes(x = a_r50_d)) +
-  geom_histogram()
+# model based ambig
+mu <- ddply(tb_day12_plot, "group", summarise, grp.mean=mean(beta_t_d))
+ggplot(tb_day12_plot, aes(x = beta_t_d, color = group, fill = group)) +
+  geom_histogram(alpha = 0.4, position ='identity') +
+  geom_vline(aes(xintercept=0),linetype="dashed")+
+  geom_vline(data=mu, aes(xintercept=grp.mean, color=group),linetype="dashed") +
+  theme_classic() +
+  labs(title = paste('Domain isGain:', domain2plot, 'Model-based ambig att change')) +
+  theme(title = element_text(size = 10))
+
+# model free ambig
+mu <- ddply(tb_day12_plot, "group", summarise, grp.mean=mean(a_r50_d))
+ggplot(tb_day12_plot, aes(x = a_r50_d, color = group, fill = group)) +
+  geom_histogram(alpha = 0.4, position ='identity') +
+  geom_vline(aes(xintercept=0),linetype="dashed")+
+  geom_vline(data=mu, aes(xintercept=grp.mean, color=group),linetype="dashed") +
+  theme_classic() +
+  labs(title = paste('Domain isGain:', domain2plot, 'Model-free ambig att change')) +
+  theme(title = element_text(size = 10))
+
+# model based risk
+mu <- ddply(tb_day12_plot, "group", summarise, grp.mean=mean(alpha_t_d))
+ggplot(tb_day12_plot, aes(x = alpha_t_d, color = group, fill = group)) +
+  geom_histogram(alpha = 0.4, position ='identity') +
+  geom_vline(aes(xintercept=0),linetype="dashed")+
+  geom_vline(data=mu, aes(xintercept=grp.mean, color=group),linetype="dashed") +
+  theme_classic() +
+  labs(title = paste('Domain isGain:', domain2plot, 'Model-based risk att change')) +
+  theme(title = element_text(size = 10))
+
+# model free risk
+mu <- ddply(tb_day12_plot, "group", summarise, grp.mean=mean(r_d))
+ggplot(tb_day12_plot, aes(x = r_d, color = group, fill = group)) +
+  geom_histogram(alpha = 0.4, position ='identity') +
+  geom_vline(aes(xintercept=0),linetype="dashed")+
+  geom_vline(data=mu, aes(xintercept=grp.mean, color=group),linetype="dashed") +
+  theme_classic() +
+  labs(title = paste('Domain isGain:', domain2plot, 'Model-free risk att change')) +
+  theme(title = element_text(size = 10))
+
+  ##### violin plot of change in variables #####
+group2plot = c('P', 'C')
+domain2plot = 0 # 1-gain, 0-loss
+tb_day12_plot = tb_day12[tb_day12$isGain == domain2plot & is.element(tb_day12$group, group2plot), ]
+
+
 
 ##### Correlation analysis ##### 
 ##### correlation between attitudes #####
