@@ -361,8 +361,43 @@ ggplot(tb_day12_plot, aes(x = eval(parse(text = x2plot)),
 
   ##### histrogram of change in variables #####
 group2plot = c('P', 'C')
-domain2plot = 0 # 1-gain, 0-loss
+domain2plot = 1 # 1-gain, 0-loss
 tb_day12_plot = tb_day12[tb_day12$isGain == domain2plot & is.element(tb_day12$group, group2plot), ]
+
+x2plot = 'r2_d'
+
+# general plot
+mu <- ddply(tb_day12_plot, "group", summarise, grp.mean=mean(eval(parse(text = x2plot))))
+ggplot(tb_day12_plot, aes(x = eval(parse(text = x2plot)), color = group, fill = group)) +
+  geom_histogram(alpha = 0.4, position ='identity') +
+  geom_vline(aes(xintercept=0),linetype="dashed")+
+  geom_vline(data=mu, aes(xintercept=grp.mean, color=group),linetype="dashed") +
+  theme_classic() +
+  ggtitle(paste('Domain isGain:', domain2plot)) +
+  xlab(x2plot) +
+  theme(title = element_text(size = 10))
+
+var_anova = ezANOVA(data=tb_day12_plot, 
+                   dv = r2_d,
+                   wid = .(id),
+                   between = .(group),
+                   type = 3,
+                   detailed = TRUE,
+                   return_aov = TRUE
+)
+var_anova
+
+# t test
+t.test(tb_day12$r2_d[tb_day12$group == 'P' & tb_day12$isGain == 0],
+       alternative = c("two.sided", "less", "greater"),
+       mu = 0, paired = FALSE, var.equal = FALSE,
+       conf.level = 0.95)
+
+t.test(tb_day12$r2_d[tb_day12$group == 'C' & tb_day12$isGain == 1],
+       tb_day12$r2_d[tb_day12$group == 'P' & tb_day12$isGain == 1],
+       alternative = c("two.sided", "less", "greater"),
+       mu = 0, paired = FALSE, var.equal = FALSE,
+       conf.level = 0.95)
 
 # model based ambig
 mu <- ddply(tb_day12_plot, "group", summarise, grp.mean=mean(beta_t_d))
@@ -799,6 +834,55 @@ corr.test(x=tb2faLoss[,c(55:57)],
 sum(tb$group == 'C')/2
 sum(tb$group == 'P')/2
 sum(tb$group == 'R')/2
+
+  ##### General code for any variable #####
+group2plot = c('C', 'P')
+# domain2plot = 1
+y2plot = 'gamma'
+tb_plot = tb[is.element(tb$group, group2plot),]
+tb_plot = tb_plot[tb_plot$gamma < 20 & tb_plot$gamma > -20, ]
+
+# bar plot
+tb_summ <- data_summary(tb_plot, varname = y2plot, groupnames = c('isGain', 'group'))
+ggplot(data = tb_summ, aes(x = isGain, y = eval(parse(text = y2plot)), fill = group)) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  geom_errorbar(aes(ymin=eval(parse(text = y2plot))-sd, ymax=eval(parse(text = y2plot))+sd), width=0.2, position=position_dodge(0.9)) +
+  scale_fill_brewer(palette = 'Greys', labels = c("Control","PTSD")) +
+  theme_classic() +
+  scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
+  ggtitle(paste(y2plot)) +
+  ylab(y2plot)
+
+# find out the who has an exremely large gamma
+tb_plot$gamma[tb_plot$gamma > 50000]
+tb_plot$id[tb_plot$gamma < -1000]
+
+
+tb_plot$id[tb_plot$gamma > 20]
+tb_plot$id[tb_plot$gamma < -20]
+
+# violin plot
+ggplot(tb_plot, aes(isGain, eval(parse(text = y2plot)), fill=group)) +
+  geom_violin(trim=FALSE) +
+  stat_summary(fun.data=data_meanstd, geom="pointrange", color = "red",
+               position = position_dodge(0.9)) +
+  scale_fill_brewer(palette="Greys", labels = c("Control","PTSD")) +
+  theme_classic() +
+  scale_x_discrete(name ="Domain", limits=c("1", "0"), labels=c("Gain","Loss")) +
+  ggtitle(paste(y2plot)) +
+  ylab(y2plot)
+
+
+var_anova = ezANOVA(data=tb_plot, 
+                     dv = r2,
+                     wid = .(id),
+                     within = .(isGain),
+                     between = .(group),
+                     type = 3,
+                     detailed = TRUE,
+                     return_aov = TRUE
+)
+var_anova
 
   ##### model based #####
 # risk attitudes, gain-loss, 2groups-controls and PTSD only
