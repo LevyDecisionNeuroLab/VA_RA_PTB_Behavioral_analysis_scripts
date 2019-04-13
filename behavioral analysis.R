@@ -191,6 +191,11 @@ tb_day12$a_r50_d <- tb_day12$a_r50_day2 - tb_day12$a_r50_day1
 tb_day12$error_d <- tb_day12$error_day2 - tb_day12$error_day1
 tb_day12$r2_d <- tb_day12$r2_day2 - tb_day12$r2_day1
 
+# count subject
+sum(tb_day12$group == 'C')/2
+sum(tb_day12$group == 'P')/2
+sum(tb_day12$group == 'R')/2
+
   ##### correlation #####
 group2plot = 'P'
 tb_day12_plot = tb_day12[tb_day12$group == group2plot,]
@@ -340,23 +345,33 @@ ggplot(tb_group, aes(isGain, y=a_r50, fill=isDay1)) +
 
   ##### Correlateion between att change and symptom ####
 group2plot = c('P', 'C')
-domain2plot = 0 # 1-gain, 0-loss
+domain2plot = 1 # 1-gain, 0-loss
 tb_day12_plot = tb_day12[tb_day12$isGain == domain2plot & is.element(tb_day12$group, group2plot), ]
 
 # what to plot
-x2plot = 'comp1'
-y2plot = 'beta_t_d'
+x2plot = 'total_pm'
+y2plot = 'r2_d'
   
-# plot
+# plot with group definition
 ggplot(tb_day12_plot, aes(x = eval(parse(text = x2plot)),
                           y = eval(parse(text = y2plot)),
                           color = group)) +
   geom_point(size=2) +
+  geom_smooth(method = lm)+
   theme_classic() +
   ggtitle(paste('Domain isGain = ', domain2plot)) +
   xlab(x2plot) + ylab (y2plot) +
   theme(title = element_text(size = 8))
 
+# plot without group definition
+ggplot(tb_day12_plot, aes(x = eval(parse(text = x2plot)),
+                          y = eval(parse(text = y2plot)))) +
+  geom_point(size=2) +
+  geom_smooth(method = lm)+
+  theme_classic() +
+  ggtitle(paste('Domain isGain = ', domain2plot)) +
+  xlab(x2plot) + ylab (y2plot) +
+  theme(title = element_text(size = 8))
 
 
   ##### histrogram of change in variables #####
