@@ -5,10 +5,18 @@ setwd(path)
 par_file <- file.path(path, "par nonpar att_allSubj_03202019.csv")
 par_day12_file <- file.path(path, "par nonpar att_allSubj_day1day2_04082019.csv")
 log_file <- file.path(path, "log_allSubj.csv")
-pca_noRemit_gain_file <- file.path(path, "pca score gain_femaleIn_noRemitted_03202019.csv")
-pca_noRemit_loss_file <- file.path(path, "pca score loss_femaleIn_noRemitted_03202019.csv")
-pca_Remit_gain_file <- file.path(path, "pca score gain_femaleIn_Remitted_03202019.csv")
-pca_Remit_loss_file <- file.path(path, "pca score loss_femaleIn_Remitted_03202019.csv")
+
+#pca_noRemit_gain_file <- file.path(path, "pca score gain_femaleIn_noRemitted_03202019.csv")
+#pca_noRemit_loss_file <- file.path(path, "pca score loss_femaleIn_noRemitted_03202019.csv")
+#pca_Remit_gain_file <- file.path(path, "pca score gain_femaleIn_Remitted_03202019.csv")
+#pca_Remit_loss_file <- file.path(path, "pca score loss_femaleIn_Remitted_03202019.csv")
+
+pca_noRemit_gain_file <- file.path(path, "pca score gain_noRemitted_10102018.csv")
+pca_noRemit_loss_file <- file.path(path, "pca score loss_noRemitted_10102018.csv")
+pca_Remit_gain_file <- file.path(path, "pca score gain_Remitted_10112018.csv")
+pca_Remit_loss_file <- file.path(path, "pca score loss_Remitted_10112018.csv")
+
+clinical_file <- file.path(path, "question scores EFA_09152018.csv")
 error_file <- file.path(path, "error miss_allSubj.csv")
 error_day12_file <- file.path(path, "error_day1day2_04082019.csv")
 
@@ -19,6 +27,7 @@ pca_noRemit_gain <- read.csv(pca_noRemit_gain_file, header=TRUE)
 pca_noRemit_loss <- read.csv(pca_noRemit_loss_file, header=TRUE)
 pca_Remit_gain <- read.csv(pca_Remit_gain_file, header=TRUE)
 pca_Remit_loss <- read.csv(pca_Remit_loss_file, header=TRUE)
+clini <- read.csv(clinical_file, header = TRUE)
 error <- read.csv(error_file, header = TRUE)
 error_day12 <- read.csv(error_day12_file, header = TRUE)
 
@@ -26,9 +35,36 @@ error_day12 <- read.csv(error_day12_file, header = TRUE)
 pca_gain <- rbind(pca_noRemit_gain, pca_Remit_gain)
 pca_loss <- rbind(pca_noRemit_loss, pca_Remit_loss)
 pca <- rbind(pca_gain, pca_loss)
+colnames(pca)
+pca_clean <- pca[,c(1,2,55:57)]
 
+# look at Subject IDs before merge table
+pca_id <- unique(pca$id)
+clini_id <- unique(clini$id)
+behav_id <- unique(par_log_error[par_log_error$isExcluded_behavior == 0,]$id)
+image_id <- unique(par_log_error[par_log_error$isExcluded_imaging == 0,]$id)
 
+is.element(pca_id, image_id)
+is.element(pca_id, behav_id)
 
+behav_id[!is.element(behav_id, pca_id)]
+image_id[!is.element(image_id, pca_id)]
+
+# subject 1285 included but no PCA, need to create two rows for 1285 in the PCA table
+pca_clean[139, 1] <- 1285
+pca_clean[140, 1] <- 1285
+
+pca_clean[139, 2] <- 1
+pca_clean[140, 2] <- 0
+
+# clean clinical
+colnames(clini)
+clini_clean <- clini[,c(1:2, 34:54)]
+
+# combine PCA with clinical
+pca_clini <- merge(pca_clean, clini_clean, by=intersect(names(pca_clean), names(clini_clean)))
+
+  
 # if for undivided
 # combine par and log tables
 par_log <- merge(par, log, by = intersect(names(par), names(log)))
@@ -36,13 +72,12 @@ par_log <- merge(par, log, by = intersect(names(par), names(log)))
 # combine error
 par_log_error <- merge(par_log, error, by = intersect(names(par_log), names(error)))
 
+
 # if do not include clinical scores
 tb <- par_log_error
 
-# combine data and pca tables
-tb <- merge(par_log_error, pca, by=intersect(names(par_log_error), names(pca)))
-
-
+# combine data and pca_clini tables
+tb <- merge(par_log_error, pca_clini, by=intersect(names(par_log_error), names(pca_clini)))
 
 
 # if for divided 
@@ -53,7 +88,7 @@ par_log <- merge(par_day12, log, by = intersect(names(par_day12), names(log)))
 par_log_error <- merge(par_log, error_day12, by = intersect(names(par_log), names(error_day12)))
 
 # combine data and pca tables
-tb <- merge(par_log_error, pca, by=intersect(names(par_log_error), names(pca)))
+tb <- merge(par_log_error, pca_clini, by=intersect(names(par_log_error), names(pca_clini)))
 
 
 # sort 
@@ -83,6 +118,8 @@ tb_sorted$isDay1 <- as.factor(tb_sorted$isDay1)
 
 
 tball <- tb_sorted
+
 # save data frame
-save(tball, file = "data_all_noPCA_day1day2_04092019.rda")
-save(tball, file = "data_all_day1day2_04082019.rda")
+save(tball, file = "data_all_noFemale_noPCA_day1day2_04092019.rda")
+save(tball, file = "data_all_noFemale_day1day2_05122019.rda")
+save(tball, file = "data_all_noFemale_05122019.rda")

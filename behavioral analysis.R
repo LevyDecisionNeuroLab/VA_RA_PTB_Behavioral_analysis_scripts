@@ -73,13 +73,24 @@ data_meanse <- function(x) {
 
 path <- "D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral"
 setwd(path)
+load('data_all_noFemale_day1day2_05122019.rda')
+load('data_all_noFemale_05122019.rda')
 load('data_all_noPCA_day1day2_04092019.rda')
 load('data_all_noPCA_04092019.rda')
 load('data_all_04082019.rda')
 load('data_all_day1day2_04082019.rda')
 
-tb = tball[tball$isExcluded_behavior==0,]
-tb = tball[tball$isExcluded_behavior==0 & !tball$group=='R',]
+pcl <- read.csv('pcl.csv',header = TRUE)
+demo <- read.csv('ed_income.csv', header = TRUE)
+demo$education <- factor(demo$education, order = TRUE, levels = c(1,2,3,4,5,6))
+demo$income <- factor(demo$income, order = TRUE, levels = c(1,2,3,4,5,6,7,8,9,10))
+
+tball_pcl <-  merge(tball, pcl, by = 'id')
+tb_all <- merge(tball_pcl, demo, by = 'id')
+
+tb = tb_all[tb_all$isExcluded_behavior==0,]
+tb = tb_all[tb_all$isExcluded_behavior==0 & !tb_all$group=='R',]
+tb = tb_all[tb_all$isExcluded_behavior==0 & !tb_all$group=='R' & tb_all$isMale == 1,]
 
 names(tb)
 
@@ -95,6 +106,7 @@ names(tb)
 # tb$isGain <- as.factor(tb$isGain)
 # tb$group <- as.factor(tb$group)
 describeBy(tball[tball$isGain == 1,], group = tball[tball$isGain == 1,]$group)
+describeBy(tb[tb$isGain == 1,], group = tb[tb$isGain == 1,]$group)
 
 # load data already EFAed (69 subjects), oblimin rotation
 tb2faGain = read.csv("D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/factor score gain_09152018.csv", header = TRUE)
@@ -702,12 +714,19 @@ colnames(tb2faLoss)[17] <- 'Ambiguity'
 ##### model-based and model-free correlation with CAPS, single scatter plot ####
 
 names(tb)
-colnames(tb)[35]<-'Reexp'
-colnames(tb)[36]<-'Avoid'
-colnames(tb)[37]<-'Numb'
-colnames(tb)[38]<-'Dysphoric'
-colnames(tb)[39]<-'Anxious'
-colnames(tb)[40]<-'Total'
+# colnames(tb)[35]<-'Reexp'
+# colnames(tb)[36]<-'Avoid'
+# colnames(tb)[37]<-'Numb'
+# colnames(tb)[38]<-'Dysphoric'
+# colnames(tb)[39]<-'Anxious'
+# colnames(tb)[40]<-'Total'
+
+colnames(tb)[30]<-'Reexp'
+colnames(tb)[31]<-'Avoid'
+colnames(tb)[32]<-'Numb'
+colnames(tb)[33]<-'Dysphoric'
+colnames(tb)[34]<-'Anxious'
+colnames(tb)[35]<-'Total'
 
 ggplot(tb[tb$isGain==1,], aes(x=Total, y=alpha_t)) +
   geom_point(size = 5) + 
@@ -745,6 +764,21 @@ ggplot(tbnoRemit,aes(x=Total, color = group, fill = group)) +
         axis.ticks = element_line(colour = "black", size = 1.25),
         axis.text = element_text(colour = "black", size = 20)) +
   labs(x="CAPS total", y="Count of participant")
+
+# accounting for education and income
+model1 <- lm(alpha_t ~ pcl5_total + age + kbit + education + income, data = tb[tb$isGain==1,])
+model1 <- lm(alpha_t ~ pcl5_total, data = tb[tb$isGain==1,])
+model_sum <- summary(model1)
+model_sum
+model_anova <- anova(model1)
+model_anova
+
+model2 <- lm(beta_t ~ pcl5_total + age + kbit + education + income, data = tb[tb$isGain==0,])
+model2 <- lm(beta_t ~ pcl5_total, data = tb[tb$isGain==0,])
+model_sum <- summary(model2)
+model_sum
+model_anova <- anova(model2)
+model_anova
 
 ##### model-based and model-free correlation with factors #####
 cor.plot(tb2faGain[,c(55:57, 16:17, 21:22)],
@@ -853,7 +887,7 @@ sum(tb$group == 'R')/2
   ##### General code for any variable #####
 group2plot = c('C', 'P')
 # domain2plot = 1
-y2plot = 'gamma'
+y2plot = 'a'
 tb_plot = tb[is.element(tb$group, group2plot),]
 tb_plot = tb_plot[tb_plot$gamma < 20 & tb_plot$gamma > -20, ]
 
