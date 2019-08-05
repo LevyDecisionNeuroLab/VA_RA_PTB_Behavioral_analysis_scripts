@@ -28,6 +28,9 @@ library(GPArotation)
 
 library(ggplot2)
 
+#install.packages("GGally")
+library(GGally)
+
 # install.packages("PerformanceAnalytics")
 library(PerformanceAnalytics)
 
@@ -85,6 +88,15 @@ names(tb2faGain)
 ```
 
 **Prepare data for PCA**  
+
+Organize into a seperate array, reorder items so that the correlation plots look nicer
+```{r}
+array2fa <- tb2faGain[,c(35:39,34,47:48,54,49,46)] # 11 questionnaitre
+names(array2fa)
+colnames(array2fa) = c("CAPS-ReExp","CAPS-Avoid","CAPS-Numb","CAPS-DysA","CAPS-AnxA","BDI", 
+                       "STAI-1","STAI-2","DES","CES","CTQ")
+```
+
 Organize into a seperate array
 ```{r}
 array2fa <- tb2faGain[,c(34:39, 46, 47:49, 54)] # 11 questionnaitre
@@ -99,10 +111,18 @@ mvn(array2fa)
 
 Visualize data structure
 ```{r}
-cor.plot(array2fa, numbers = TRUE, main="11 Quest Scores", xlas=2)
+cor.plot(array2fa, numbers = TRUE, gr = colorRampPalette(c("#2171B5","white","#B52127")), zlim = c(-1,1), main="11 Quest Scores", xlas=2)
+
+# with adjust for multiple tests
+cor.plot(array2fa, numbers = TRUE, adjust ="holm", main="11 Quest Scores", xlas=2)
+
+
 chart.Correlation(array2fa,
                   histogram = TRUE,
                   method = 'pearson')
+
+ggcorr(array2fa, low = "#2171B5", mid = "white", high = "#B52127", label = TRUE, label_size = 3, label_round = 2, label_alpha = TRUE, size = 3, hjust = 0.75, color = "grey50")
+
 
 # pairs.panels(array2fa,pch='.')
 ```
@@ -123,6 +143,23 @@ summary(pcaresult)
 ```
 Plot variance explained
 ```{r}
+# calculate variace from eigenvalues
+eigs <- pcaresult$sdev^2
+var_explain <- eigs/sum(eigs)
+plot(var_explain, type = "b")
+
+comp_id = c(1:11)
+var_plot <- data.frame(comp_id, var_explain)
+
+# plot variance explained
+ggplot(var_plot, aes(x = comp_id, y = var_explain)) +
+  geom_point() + geom_line() +
+  scale_x_continuous(breaks = c(1:11)) +
+  theme_classic()
+
+# plot cumulative variance
+
+# another way to plot eigenvalues
 plot(pcaresult)
 ```
 
