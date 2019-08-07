@@ -158,6 +158,20 @@ ggplot(var_plot, aes(x = comp_id, y = var_explain)) +
   theme_classic()
 
 # plot cumulative variance
+for (i in c(1:nrow(var_plot))) {
+  var_plot$var_cumul[i] <- sum(var_plot$var_explain[1:i])
+}
+
+
+# plot cumulative variance explained
+ggplot(var_plot, aes(x = comp_id, y = var_cumul)) +
+  geom_point(size = 3) + geom_line() +
+  scale_x_continuous(breaks = c(1:11)) +
+  theme_classic() +
+  theme(text = element_text(size=12), axis.line = element_line(size = 1),
+        axis.ticks = element_line(colour = "black", size = 1),
+        axis.text = element_text(colour = "black", size = 10)) +
+  labs(x="Number of components", y="Cumulative variance explained")
 
 # another way to plot eigenvalues
 plot(pcaresult)
@@ -168,16 +182,120 @@ Plot loadings
 # plot loadings
 # pcaload <- pcaresult$loadings[,]
 pcaload <- pcaresult$rotation[,]
-barplot(pcaload[,1], main="Component 1", ylab="Loadings", las=2)
-barplot(pcaload[,2], main="Component 2", ylab="Loadings", las=2)
-barplot(pcaload[,3], main="Component 3", ylab="Loadings", las=2)
+# barplot(pcaload[,1], main="Component 1", ylab="Loadings", las=2)
+# barplot(pcaload[,2], main="Component 2", ylab="Loadings", las=2)
+# barplot(pcaload[,3], main="Component 3", ylab="Loadings", las=2)
+
+load_plot <- data.frame(comp_id, pcaload[,1], pcaload[,2], pcaload[,3])
+colnames(load_plot) <- c('comp_id', 'comp1', 'comp2', 'comp3')
+
+# bar plot of loadings
+ggplot(load_plot, aes(x = comp_id, y = comp1)) +
+  geom_bar(stat = "identity") +
+  scale_x_continuous(breaks = c(1:11), labels = rownames(load_plot)) +
+  scale_y_continuous(limits = c(0,0.4), breaks = seq(0,0.4,0.05)) +
+  theme_classic() +
+  theme(text = element_text(size=12), axis.line = element_line(size = 1),
+        axis.ticks = element_line(colour = "black", size = 1),
+        axis.text.x = element_text(angle = 90),
+        axis.text = element_text(colour = "black", size = 10)) +
+  labs(y="Loadings", x="") +
+  ggtitle('Component1')
+
+ggplot(load_plot, aes(x = comp_id, y = comp2)) +
+  geom_bar(stat = "identity") +
+  scale_x_continuous(breaks = c(1:11), labels = rownames(load_plot)) +
+  scale_y_continuous(limits = c(-0.4,0.6), breaks = seq(-0.4,0.6,0.2)) +
+  theme_classic() +
+  theme(text = element_text(size=12), axis.line = element_line(size = 1),
+        axis.ticks = element_line(colour = "black", size = 1),
+        axis.text.x = element_text(angle = 90),
+        axis.text = element_text(colour = "black", size = 10)) +
+  labs(y="Loadings", x="") +
+  ggtitle('Component2')
+
+ggplot(load_plot, aes(x = comp_id, y = comp3)) +
+  geom_bar(stat = "identity") +
+  scale_x_continuous(breaks = c(1:11), labels = rownames(load_plot)) +
+  # scale_y_continuous(limits = c(-0.4,1), breaks = seq(-0.4,0.85,0.2)) +
+  theme_classic() +
+  theme(text = element_text(size=12), axis.line = element_line(size = 1),
+        axis.ticks = element_line(colour = "black", size = 1),
+        axis.text.x = element_text(angle = 90),
+        axis.text = element_text(colour = "black", size = 10)) +
+  labs(y="Loadings", x="") +
+  ggtitle('Component3')
 
 ```
 
-Get rotated values (component scores)
+Get rotated values (component scores), and plot on PC dimensions
 ```{r}
 # rotated values
 score = pcaresult$x
+
+View(score)
+typeof(score)
+# change it to data frame
+score_tb <- as.data.frame.array(score)
+
+View(score_tb)
+View(tb2faGain)
+
+score_tb$id <- tb2faGain$id
+score_tb$group <- tb2faGain$group
+
+
+# plot PC distribution
+ggplot(score_tb, aes(x = PC1, color = group, fill = group)) +
+  geom_histogram(position = "identity", alpha = 0.6, size =1, bins = 25) +
+  scale_color_manual(values = c("olivedrab","darkorange3","grey50")) +
+  scale_fill_manual(values = c("olivedrab","darkorange3","grey50")) +
+  theme_classic() +
+  theme(text = element_text(size=12), axis.line = element_line(size = 1),
+        axis.ticks = element_line(colour = "black", size = 1),
+        axis.text = element_text(colour = "black", size = 10)) +
+  labs(x="PC1", y="Count of participant")
+
+ggplot(score_tb, aes(x = PC2, color = group, fill = group)) +
+  geom_histogram(position = "identity", alpha = 0.6, size =1, bins = 25) +
+  scale_color_manual(values = c("olivedrab","darkorange3","grey50")) +
+  scale_fill_manual(values = c("olivedrab","darkorange3","grey50")) +
+  theme_classic() +
+  theme(text = element_text(size=12), axis.line = element_line(size = 1),
+        axis.ticks = element_line(colour = "black", size = 1),
+        axis.text = element_text(colour = "black", size = 10)) +
+  labs(x="PC2", y="Count of participant")
+
+ggplot(score_tb, aes(x = PC3, color = group, fill = group)) +
+  geom_histogram(position = "identity", alpha = 0.6, size =1, bins = 25) +
+  scale_color_manual(values = c("olivedrab","darkorange3","grey50")) +
+  scale_fill_manual(values = c("olivedrab","darkorange3","grey50")) +
+  theme_classic() +
+  theme(text = element_text(size=12), axis.line = element_line(size = 1),
+        axis.ticks = element_line(colour = "black", size = 1),
+        axis.text = element_text(colour = "black", size = 10)) +
+  labs(x="PC3", y="Count of participant")
+
+# plot participants in PC space
+ggplot(score_tb, aes(x=PC1, y=PC2, color=group)) +
+  geom_point(size = 3) +
+  scale_color_manual(values = c("olivedrab","darkorange3","grey50")) +
+  scale_fill_manual(values = c("olivedrab","darkorange3","grey50")) +
+  # theme_classic() +
+  theme(text = element_text(size=12),
+        axis.ticks = element_line(colour = "black", size = 1),
+        axis.text = element_text(colour = "black", size = 10))
+
+ggplot(score_tb, aes(x=PC2, y=PC3, color=group)) +
+  geom_point(size = 3) +
+  scale_color_manual(values = c("olivedrab","darkorange3","grey50")) +
+  scale_fill_manual(values = c("olivedrab","darkorange3","grey50")) +
+  # theme_classic() +
+  theme(text = element_text(size=12),
+        axis.ticks = element_line(colour = "black", size = 1),
+        axis.text = element_text(colour = "black", size = 10))
+
+
 ```
 
 **Save PCA output**  
@@ -196,8 +314,8 @@ tb2faLoss$comp3 = score[,3]
 Save data
 ```{r}
 # save data
-write.csv(tb2faGain,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score gain_femaleIn_noRemitted_01172019.csv")
-write.csv(tb2faLoss,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score loss_femaleIn_noRemitted_01172019.csv")
+write.csv(tb2faGain,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score gain_noRemitted_08072019.csv")
+write.csv(tb2faLoss,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score loss_noRemitted_08072019.csv")
 ```
 
 **Caculate the components for remitted PTSD subjects**  
@@ -228,7 +346,7 @@ tb2faLossRemitted <- tb[tb$isExcluded_behavior == 0 & tb$isGain == 0
 
 Calculate the components
 ```{r}
-scoreRemitted = scale(tb2faGainRemitted[,c(34:39, 46, 47:49, 54)], center= pcaresult$center) %*% pcaload
+scoreRemitted = scale(tb2faGainRemitted[,c(35:39,34,47:48,54,49,46)], center= pcaresult$center) %*% pcaload
 ```
 
 Combine component score into data
@@ -246,8 +364,8 @@ tb2faLossRemitted$comp3 = scoreRemitted[,3]
 Save data
 ```{r}
 
-write.csv(tb2faGainRemitted,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score gain_femaleIn_Remitted_01172019.csv")
-write.csv(tb2faLossRemitted,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score loss_femaleIn_Remitted_01172019.csv")
+write.csv(tb2faGainRemitted,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score gain_Remitted_08072019.csv")
+write.csv(tb2faLossRemitted,"D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral/pca score loss_Remitted_08072019.csv")
 
 ```
 
