@@ -276,6 +276,10 @@ ggplot(score_tb, aes(x = PC3, color = group, fill = group)) +
         axis.text = element_text(colour = "black", size = 10)) +
   labs(x="PC3", y="Count of participant")
 
+# test if Control and PTSD differ in PC3 (trauma exposure)
+t.test(score_tb$PC2[score_tb$group=='C'], score_tb$PC2[score_tb$group=='P'])
+
+
 # plot participants in PC space
 ggplot(score_tb, aes(x=PC1, y=PC2, color=group)) +
   geom_point(size = 3) +

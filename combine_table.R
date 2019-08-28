@@ -3,7 +3,7 @@ setwd(path)
 
 # load data
 par_file <- file.path(path, "par nonpar att_allSubj_03202019.csv")
-par_day12_file <- file.path(path, "par nonpar att_allSubj_day1day2_04082019.csv")
+par_day12_file <- file.path(path, "par nonpar att_allSubj_day1day2_08262019.csv")
 log_file <- file.path(path, "log_allSubj.csv")
 
 #pca_noRemit_gain_file <- file.path(path, "pca score gain_femaleIn_noRemitted_03202019.csv")
@@ -38,11 +38,23 @@ pca <- rbind(pca_gain, pca_loss)
 colnames(pca)
 pca_clean <- pca[,c(1,2,55:57)]
 
+# clean clinical
+colnames(clini)
+clini_clean <- clini[,c(1:2, 34:54)]
+
+# if for undivided
+# combine par and log tables
+par_log <- merge(par, log, by = intersect(names(par), names(log)))
+
+# combine error
+par_log_error <- merge(par_log, error, by = intersect(names(par_log), names(error)))
+
 # look at Subject IDs before merge table
 pca_id <- unique(pca$id)
 clini_id <- unique(clini$id)
 behav_id <- unique(par_log_error[par_log_error$isExcluded_behavior == 0,]$id)
 image_id <- unique(par_log_error[par_log_error$isExcluded_imaging == 0,]$id)
+female_id <- unique(par_log_error[par_log_error$isMale == 0,]$id)
 
 is.element(pca_id, image_id)
 is.element(pca_id, behav_id)
@@ -50,27 +62,33 @@ is.element(pca_id, behav_id)
 behav_id[!is.element(behav_id, pca_id)]
 image_id[!is.element(image_id, pca_id)]
 
-# subject 1285 included but no PCA, need to create two rows for 1285 in the PCA table
+# subject 1285,117,102, 3 included but no PCA, need to create two rows in the PCA table
 pca_clean[139, 1] <- 1285
 pca_clean[140, 1] <- 1285
 
 pca_clean[139, 2] <- 1
 pca_clean[140, 2] <- 0
 
-# clean clinical
-colnames(clini)
-clini_clean <- clini[,c(1:2, 34:54)]
+pca_clean[141, 1] <- 117
+pca_clean[142, 1] <- 117
+
+pca_clean[141, 2] <- 1
+pca_clean[142, 2] <- 0
+
+pca_clean[143, 1] <- 102
+pca_clean[144, 1] <- 102
+
+pca_clean[143, 2] <- 1
+pca_clean[144, 2] <- 0
+
+pca_clean[145, 1] <- 3
+pca_clean[146, 1] <- 3
+
+pca_clean[145, 2] <- 1
+pca_clean[146, 2] <- 0
 
 # combine PCA with clinical
 pca_clini <- merge(pca_clean, clini_clean, by=intersect(names(pca_clean), names(clini_clean)))
-
-  
-# if for undivided
-# combine par and log tables
-par_log <- merge(par, log, by = intersect(names(par), names(log)))
-
-# combine error
-par_log_error <- merge(par_log, error, by = intersect(names(par_log), names(error)))
 
 
 # if do not include clinical scores
@@ -120,6 +138,6 @@ tb_sorted$isDay1 <- as.factor(tb_sorted$isDay1)
 tball <- tb_sorted
 
 # save data frame
-save(tball, file = "data_all_noFemale_noPCA_day1day2_04092019.rda")
-save(tball, file = "data_all_noFemale_day1day2_05122019.rda")
-save(tball, file = "data_all_noFemale_05122019.rda")
+# save(tball, file = "data_all_noFemale_noPCA_day1day2_08272019.rda")
+save(tball, file = "data_all_noFemale_day1day2_08272019.rda")
+save(tball, file = "data_all_noFemale_08272019.rda")
