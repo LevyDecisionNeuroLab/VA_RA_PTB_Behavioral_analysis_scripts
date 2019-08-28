@@ -1,0 +1,174 @@
+---
+title: "subjective_value"
+author: ruonan jia
+date: 06.14.2019
+---
+
+---
+load packages
+```{r}
+library(ggplot2)
+library(ez)
+library(psych)
+library(lme4)
+```
+
+---
+functions
+```{r}
+data_summary <- function(data, varname, groupnames){
+  # Function to calculate the mean and the standard error
+  # for each group
+  #+++++++++++++++++++++++++
+  # data : a data frame
+  # varname : the name of a column containing the variable
+  #to be summariezed
+  # groupnames : vector of column names to be used as
+  # grouping variables
+  
+  require(plyr)
+  summary_func <- function(x, col){
+    c(mean = mean(x[[col]], na.rm=TRUE),
+      sd = sd(x[[col]], na.rm=TRUE)/sqrt(length(x[[col]])))
+  }
+  data_sum<-ddply(data, groupnames, .fun=summary_func,
+                  varname)
+  data_sum <- rename(data_sum, c("mean" = varname))
+  return(data_sum)
+}
+
+```
+
+---
+load data
+```{r}
+behav_path <- "D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral"
+setwd(behav_path)
+
+sv <- read.csv('sv_trial_day1day2.csv', header = TRUE)
+load("data_all_noFemale_day1day2_05122019.rda")
+pcl <- read.csv('pcl.csv',header = TRUE)
+demo <- read.csv('ed_income.csv', header = TRUE)
+demo$education <- factor(demo$education, order = TRUE, levels = c(1,2,3,4,5,6))
+demo$income <- factor(demo$income, order = TRUE, levels = c(1,2,3,4,5,6,7,8,9,10))
+
+# combine data
+tball_pcl <-  merge(tball, pcl, by = 'id')
+tb_all <- merge(tball_pcl, demo, by = 'id')
+tb <- tb_all[tb_all$isExcluded_imaging==0 & tball$isMale==1,]
+
+```
+
+---
+plot SV distribution of a single subject
+```{r}
+id2plot <- 3
+isDay12plot <- 1
+isGain2plot <- 0
+isRisk2plot <- 1
+
+if (isRisk2plot == 1){
+  sv2plot <- sv[sv$id == id2plot & sv$isDay1 == isDay12plot & sv$isGain == isGain2plot & sv$ambig == 0,]
+} else {
+  sv2plot <- sv[sv$id == id2plot & sv$isDay1 == isDay12plot & sv$isGain == isGain2plot & sv$ambig > 0,] 
+}
+
+ggplot(sv2plot, aes(x=sv)) +
+  geom_histogram(bins = 30) + 
+  ggtitle(paste('Subject', id2plot, ', SV Histogram. isGain=', isGain2plot, ', isDay1=', isDay12plot, ', isRisk=', isRisk2plot))
+
+```
+
+---
+calculate the mean and variance of SV in each decision domain for each subject
+```{r}
+# get subject id
+subject_id <- unique(tb$id)
+subject_id
+
+# SV summary (min, max, variance), day1/day2, gain/loss, risk/ambiguity
+row_idx <- 0
+sv_sum <- data.frame(id=integer(),
+                 isDay1=integer(),
+                 isGain=integer(),
+                 isRisk=integer(),
+                 sv_max=double(),
+                 sv_min=double(),
+                 sv_mean=double(),
+                 sv_sd=double(),
+                 sv_ref=double())
+
+for (id2sum in subject_id) {
+  for (isDay12sum in c(1,0)) {
+    for (isGain2sum in c(1,0)) {
+      for (isRisk2sum in c(1,0)) {
+        if (isRisk2sum == 1) {
+          sv2sum <- sv[sv$id == id2sum & sv$isDay1 == isDay12sum & sv$isGain == isGain2sum & sv$ambig == 0,] 
+        } else {
+          sv2sum <- sv[sv$id == id2sum & sv$isDay1 == isDay12sum & sv$isGain == isGain2sum & sv$ambig > 0,]
+        }
+        
+        row_idx <- row_idx + 1
+        
+        sv_sum[row_idx,]$id <- id2sum
+        sv_sum[row_idx,]$isDay1 <- isDay12sum
+        sv_sum[row_idx,]$isGain <- isGain2sum
+        sv_sum[row_idx,]$isRisk <- isRisk2sum
+        
+        sv_sum[row_idx,]$sv_max <- max(sv2sum$sv)
+        sv_sum[row_idx,]$sv_min <- min(sv2sum$sv)
+        sv_sum[row_idx,]$sv_mean <- mean(sv2sum$sv)
+        sv_sum[row_idx,]$sv_sd <- sd(sv2sum$sv)
+        sv_sum[row_idx,]$sv_ref <- mean(sv2sum$sv_ref)
+      }
+    }
+  }
+}
+```
+
+
+---
+merge data frame
+```{r}
+sv_sum$id <- as.factor(sv_sum$id)
+
+grouping <- data.frame(id = tb[tb$isDay1 == 1 & tb$isGain == 1,]$id,
+                      isExcluded_behavior = tb[tb$isDay1 == 1 & tb$isGain == 1,]$isExcluded_behavior,
+                      isExcluded_imaging = tb[tb$isDay1 == 1 & tb$isGain == 1,]$isExcluded_imaging,
+                      isMale = tb[tb$isDay1 == 1 & tb$isGain == 1,]$isMale,
+                      age = tb[tb$isDay1 == 1 & tb$isGain == 1,]$age,
+                      kbit = tb[tb$isDay1 == 1 & tb$isGain == 1,]$kbit,
+                      group = tb[tb$isDay1 == 1 & tb$isGain == 1,]$group)
+
+sv_sum_group <- merge(sv_sum, grouping, by = 'id')
+
+```
+
+---
+compare sv range between PTSD and control
+```{r}
+isDay12plot <- 0
+isGain2plot <- 0
+isRisk2plot <- 0
+group2plot <- c('P', 'C')
+
+sv_sum2plot <- sv_sum_group[sv_sum_group$isExcluded_imaging == 0 & match(sv_sum_group$group, group2plot) & sv_sum_group$isDay1 == isDay12plot & sv_sum_group$isGain == isGain2plot & sv_sum_group$isRisk == isRisk2plot,]
+ 
+
+ggplot(sv_sum2plot[sv_sum2plot$sv_mean > -30,], aes(x=sv_mean, color=group, fill = group)) +
+  geom_histogram(bins = 30, position = 'identity', alpha = 0.5) + 
+  ggtitle(paste('SV Histogram. isGain=', isGain2plot, ', isDay1=', isDay12plot, ', isRisk=', isRisk2plot)) +
+  theme(plot.title = element_text(size = 12))
+
+
+sv_sum2plot[sv_sum2plot$sv_mean>-30 & sv_sum2plot$sv_mean< -10, ]$id
+```
+
+
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
