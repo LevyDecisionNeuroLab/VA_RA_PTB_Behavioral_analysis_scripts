@@ -1,0 +1,72 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+path <- "D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral"
+setwd(path)
+
+# load data
+par_file <- file.path(path, "par nonpar att_allSubj_03202019.csv")
+par_day12_file <- file.path(path, "par nonpar att_allSubj_day1day2_04082019.csv")
+log_file <- file.path(path, "log_allSubj.csv")
+
+par <- read.csv(par_file, header=TRUE)
+par_day12 <- read.csv(par_day12_file, header = TRUE)
+log <- read.csv(log_file, header=TRUE)
+
+```
+
+```{r}
+colnames(par_day12)
+
+par_day12$r_sum <- rowSums(par_day12[,11:13])
+par_day12$a_sum <- rowSums(par_day12[,14:16])
+par_day12$ra_sum <- rowSums(par_day12[,11:16])
+colnames(par_day12)
+```
+
+Which subjects did not choose lottery at all
+```{r}
+paste('Gain day1 risk:')
+par_day12$id[par_day12$isGain==1 & par_day12$isDay1==1 & par_day12$r_sum==0]
+paste('Gain day2 risk:')
+par_day12$id[par_day12$isGain==1 & par_day12$isDay1==0 & par_day12$r_sum==0]
+paste('Loss day1 risk:')
+par_day12$id[par_day12$isGain==0 & par_day12$isDay1==1 & par_day12$r_sum==0]
+paste('Loss day2 risk:')
+par_day12$id[par_day12$isGain==0 & par_day12$isDay1==0 & par_day12$r_sum==0]
+
+paste('Gain day1 ambig:')
+par_day12$id[par_day12$isGain==1 & par_day12$isDay1==1 & par_day12$a_sum==0]
+paste('Gain day2 ambig:')
+par_day12$id[par_day12$isGain==1 & par_day12$isDay1==0 & par_day12$a_sum==0]
+paste('Loss day1 ambig:')
+par_day12$id[par_day12$isGain==0 & par_day12$isDay1==1 & par_day12$a_sum==0]
+paste('Loss day2 ambig:')
+par_day12$id[par_day12$isGain==0 & par_day12$isDay1==0 & par_day12$a_sum==0]
+
+paste('Gain day1 both:')
+par_day12$id[par_day12$isGain==1 & par_day12$isDay1==1 & par_day12$ra_sum==0]
+paste('Gain day2 both:')
+par_day12$id[par_day12$isGain==1 & par_day12$isDay1==0 & par_day12$ra_sum==0]
+paste('Loss day1 both:')
+par_day12$id[par_day12$isGain==0 & par_day12$isDay1==1 & par_day12$ra_sum==0]
+paste('Loss day2 both:')
+par_day12$id[par_day12$isGain==0 & par_day12$isDay1==0 & par_day12$ra_sum==0]
+```
+
+
+
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
