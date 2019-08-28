@@ -529,26 +529,17 @@ ggplot(tb_day12_plot, aes(x = group, y = a_r50_d, fill = group)) +
   theme(axis.title.y=element_text(size = 14)) +
   theme(axis.title = element_text(size = 16))
 
-##### Correlation analysis ##### 
 ##### correlation between attitudes #####
-chart.Correlation(tb[tb$isGain==1,c(16:17, 21:22)], 
+colnames(tb)
+colnames(tb)[c(29:35, 41:44, 49)] = c("BDI", "CAPS_ReExp","CAPS_Avoid","CAPS_Numb","CAPS_DysA","CAPS_AnxA",
+                                           "CAPS_Total", "CTQ", "STAI-1","STAI-2","CES","DES")
+
+chart.Correlation(tb[tb$isGain==0 & tb$group=='P',c(53:54, 50, 52)], 
                   histogram=TRUE, 
                   method = c("pearson"))
 
 test1 <- corr.test(x=tb[tb$isGain==1,c(16:17, 21:22)],
                    y=tb[tb$isGain==1,c(16:17, 21:22)],
-                   use = "pairwise",
-                   method = "spearman",
-                   adjust = "none",
-                   alpha=.05)
-print(test1, digits = 4)
-
-chart.Correlation(tb[tb$isGain==0,c(16:17, 21:22)], 
-                  histogram=TRUE, 
-                  method = c("pearson"))
-
-test1 <- corr.test(x=tb[tb$isGain==0,c(16:17, 21:22)],
-                   y=tb[tb$isGain==0,c(16:17, 21:22)],
                    use = "pairwise",
                    method = "spearman",
                    adjust = "none",
@@ -592,131 +583,178 @@ test1 <- corr.test(x=tbDomain[,c(5:6, 9:10)],
                    alpha=.05)
 print(test1, digits = 4)
 
-##### model-based and model-free correlation with CAPS #####
+##### model-based and model-free correlation with PTSD (CAPS and PCLM)#####
 names(tb)
-colnames(tb)[35]<-'Reexp'
-colnames(tb)[36]<-'Avoid'
-colnames(tb)[37]<-'Numb'
-colnames(tb)[38]<-'Dysphoric'
-colnames(tb)[39]<-'Anxious'
-colnames(tb)[40]<-'Total'
+# colnames(tb)[35]<-'Reexp'
+# colnames(tb)[36]<-'Avoid'
+# colnames(tb)[37]<-'Numb'
+# colnames(tb)[38]<-'Dysphoric'
+# colnames(tb)[39]<-'Anxious'
+# colnames(tb)[40]<-'Total'
 
-# model free gains
-chart.Correlation(tb[tb$isGain==1,c(21:22, 35:40)],
+# with CAPS
+colnames(tb)
+chart.Correlation(tb[tb$isGain==0,c(53:54, 30:35)],
                   histogram = TRUE,
                   method = "pearson")
 
 # test for correlation
-test1 <- corr.test(x=tb[tb$isGain==1,c(21:22)],
-          y=tb[tb$isGain==1,c(35:40)],
+test1 <- corr.test(x=tb[tb$isGain==0 & tb$group=='C', c(53:54)],
+          y=tb[tb$isGain==1 & tb$group=='C', c(30:35)],
           use = "pairwise",
           method = "spearman",
           adjust = "none",
           alpha=.05)
 print(test1, digits = 4)
 
+# single plot for CAPS total
+ggplot(tb[tb$isGain==0, ], aes(x=CAPS_Total, y=beta_t)) + 
+  geom_point(size=4) +
+  geom_smooth(method=lm, se=TRUE, linetype="dashed", color = "black") +
+  scale_x_continuous(limits=c(0, 120), breaks = seq(0,120,30)) +
+  scale_y_continuous(limits=c(-2.5, 1), breaks = seq(-2.5, 1, 0.5))  +
+  theme_classic()+
+  theme(axis.line = element_line(size = 1)) +
+  theme(axis.ticks = element_line(size = 1, color = "black")) +
+  theme(axis.text = element_text(size = 12, color = "black")) +
+  ggtitle("MB ambiguiy attitude and PTSD symptom") + xlab("CAPS total") + ylab("Transformed beta") +
+  theme(axis.title.y=element_text(size = 12)) +
+  theme(axis.title.x=element_text(size = 12)) +
+  theme(axis.title = element_text(size = 12))
 
-# model based gains
-chart.Correlation(tb[tb$isGain==1,c(53:54, 35:40)],
+print(corr.test(x=tb[tb$isGain==0,]$CAPS_Total,
+                   y=tb[tb$isGain==0,]$beta_t,
+                   method = "spearman",
+                   adjust = "none",
+                   alpha=.05), 
+      digits = 4)
+
+# with pcl
+ggplot(tb[tb$isGain==0, ], aes(x=pclm_total, y=alpha_t)) + 
+  geom_point(size=4) +
+  geom_smooth(method=lm, se=TRUE, linetype="dashed", color = "black") +
+  scale_x_continuous(limits=c(15, 80), breaks = seq(20,80,20)) +
+  # scale_y_continuous(limits=c(-2.5, 1), breaks = seq(-2.5, 1, 0.5))  +
+  theme_classic()+
+  theme(axis.line = element_line(size = 1)) +
+  theme(axis.ticks = element_line(size = 1, color = "black")) +
+  theme(axis.text = element_text(size = 12, color = "black")) +
+  ggtitle("MB risk attitude and PTSD symptom") + xlab("PCLM total") + ylab("Transformed alpha") +
+  theme(axis.title.y=element_text(size = 12)) +
+  theme(axis.title.x=element_text(size = 12)) +
+  theme(axis.title = element_text(size = 12))
+
+print(corr.test(x=tb[tb$isGain==0,]$pclm_total,
+                y=tb[tb$isGain==0,]$alpha_t,
+                method = "pearson",
+                adjust = "none",
+                alpha=.05), 
+      digits = 4)
+
+# accounting for education and income
+model1 <- lm(alpha_t ~ pcl5_total + age + kbit + education + income, data = tb[tb$isGain==1,])
+model1 <- lm(alpha_t ~ pcl5_total, data = tb[tb$isGain==1,])
+model_sum <- summary(model1)
+model_sum
+model_anova <- anova(model1)
+model_anova
+
+model2 <- lm(beta_t ~ pcl5_total + age + kbit + education + income, data = tb[tb$isGain==0,])
+model2 <- lm(beta_t ~ pcl5_total, data = tb[tb$isGain==0,])
+model_sum <- summary(model2)
+model_sum
+model_anova <- anova(model2)
+model_anova
+
+##### model-based and model-free correlation with other symotom (PCA) #####
+colnames(tb)
+colnames(tb)[26:28] <- c("PCA1", "PCA2", "PCA3")
+
+chart.Correlation(tb[tb$isGain == 1,c(53:54, 26:28)],
                   histogram = TRUE,
-                  method = 'pearson')
-# test for correlation
-test1 <- corr.test(x=tb[tb$isGain==1,c(53:54)],
-                   y=tb[tb$isGain==1,c(35:40)],
-                   use = "pairwise",
-                   method = "pearson",
-                   adjust = "none",
-                   alpha=.05)
-print(test1, digits = 4)
+                  method = "pearson")
 
-test1 <- corr.test(x=tb[tb$isGain==1 & !tb$id == 3, c(16:17)],
-                   y=tb[tb$isGain==1 & !tb$id == 3, c(35:40)],
-                   use = "pairwise",
-                   method = "spearman",
-                   adjust = "none",
-                   alpha=.05)
-print(test1, digits = 4)
-
-# model free loss
-chart.Correlation(tb[tb$isGain==0,c(21:22, 35:40)],
+chart.Correlation(tb[tb$isGain == 0,c(53:54, 26:28)],
                   histogram = TRUE,
-                  method = 'pearson')
-# test for correlation
-test1 <- corr.test(x=tb[tb$isGain==0,c(21:22)],
-                   y=tb[tb$isGain==0,c(35:40)],
-                   use = "pairwise",
-                   method = "spearman",
-                   adjust = "none",
-                   alpha=.05)
-print(test1, digits = 4)
+                  method = "pearson")
 
-# model based loss
-chart.Correlation(tb[tb$isGain==0,c(53:54, 35:40)],
-                  histogram = TRUE,
-                  method = 'pearson')
-# test for correlation
-test1 <- corr.test(x=tb[tb$isGain==0,c(53:54)],
-                   y=tb[tb$isGain==0,c(35:40)],
-                   use = "pairwise",
-                   method = "pearson",
-                   adjust = "none",
-                   alpha=.05)
-print(test1, digits = 4)
+# single plot
+ggplot(tb[tb$isGain==1, ], aes(x=pclm_total, y=alpha_t)) + 
+  geom_point(size=4) +
+  geom_smooth(method=lm, se=TRUE, linetype="dashed", color = "black") +
+  scale_x_continuous(limits=c(15, 80), breaks = seq(20,80,20)) +
+  # scale_y_continuous(limits=c(-2.5, 1), breaks = seq(-2.5, 1, 0.5))  +
+  theme_classic()+
+  theme(axis.line = element_line(size = 1)) +
+  theme(axis.ticks = element_line(size = 1, color = "black")) +
+  theme(axis.text = element_text(size = 12, color = "black")) +
+  ggtitle("MB risk attitude and PTSD symptom") + xlab("PCLM total") + ylab("Transformed alpha") +
+  theme(axis.title.y=element_text(size = 12)) +
+  theme(axis.title.x=element_text(size = 12)) +
+  theme(axis.title = element_text(size = 12))
 
-
-# exclude the one with extreme ambig att in gain
-exclude1 = tb$id[tb$isGain==1 & tb$beta_t < -3]
-exclude1 # 3
-
-# exclude the one with extreme risk att in loss
-exclude1 = tb$id[tb$isGain==0 & tb$alpha_t < -2.5]
-exclude1 # 1069
-test1 <- corr.test(x=tb[tb$isGain==0 & !tb$id == 1069,c(16:17)],
-                   y=tb[tb$isGain==0 & !tb$id == 1069,c(35:40)],
-                   use = "pairwise",
-                   method = "spearman",
-                   adjust = "none",
-                   alpha=.05)
-print(test1, digits = 4)
+print(corr.test(x=tb[tb$isGain==0,]$pclm_total,
+                y=tb[tb$isGain==0,]$alpha_t,
+                method = "pearson",
+                adjust = "none",
+                alpha=.05), 
+      digits = 4)
 
 
-exclude1 = tb$id[tb$isGain==0 & tb$r > 0.7]
-exclude1 # 38, 96
 
-# exclude the one with extreme ambig att in loss
-exclude2 = tb$id[tb$isGain==0 & tb$beta_t < -2]
-exclude2 # 1074
-exclude2 = tb$id[tb$isGain==0 & tb$beta_t > 2]
-exclude2 # 1354
-
-test1 <- corr.test(x=tb[tb$isGain==0 & !tb$id == 1074,c(16:17)],
-                   y=tb[tb$isGain==0 & !tb$id == 1074,c(35:40)],
-                   use = "pairwise",
-                   method = "spearman",
-                   adjust = "none",
-                   alpha=.05)
-print(test1, digits = 4)
-
-test1 <- corr.test(x=tb[tb$isGain==0 & !tb$id == 1074 & !tb$id == 1354,c(16:17)],
-                   y=tb[tb$isGain==0 & !tb$id == 1074 & !tb$id == 1354,c(35:40)],
-                   use = "pairwise",
-                   method = "spearman",
-                   adjust = "none",
-                   alpha=.05)
-print(test1, digits = 4)
-
-
-exclude2 = tb$id[tb$isGain==0 & tb$a_r50 > 0.4]
-exclude2 # 95
-exclude2 = tb$id[tb$isGain==0 & tb$a_r50 < -0.3]
-exclude2 # 1234
-
-# change names for graphs
-colnames(tb2faGain)[16] <- 'Risk'
-colnames(tb2faGain)[17] <- 'Ambiguity'
-
-colnames(tb2faLoss)[16] <- 'Risk'
-colnames(tb2faLoss)[17] <- 'Ambiguity'
+# # exclude the one with extreme ambig att in gain
+# exclude1 = tb$id[tb$isGain==1 & tb$beta_t < -3]
+# exclude1 # 3
+# 
+# # exclude the one with extreme risk att in loss
+# exclude1 = tb$id[tb$isGain==0 & tb$alpha_t < -2.5]
+# exclude1 # 1069
+# test1 <- corr.test(x=tb[tb$isGain==0 & !tb$id == 1069,c(16:17)],
+#                    y=tb[tb$isGain==0 & !tb$id == 1069,c(35:40)],
+#                    use = "pairwise",
+#                    method = "spearman",
+#                    adjust = "none",
+#                    alpha=.05)
+# print(test1, digits = 4)
+# 
+# 
+# exclude1 = tb$id[tb$isGain==0 & tb$r > 0.7]
+# exclude1 # 38, 96
+# 
+# # exclude the one with extreme ambig att in loss
+# exclude2 = tb$id[tb$isGain==0 & tb$beta_t < -2]
+# exclude2 # 1074
+# exclude2 = tb$id[tb$isGain==0 & tb$beta_t > 2]
+# exclude2 # 1354
+# 
+# test1 <- corr.test(x=tb[tb$isGain==0 & !tb$id == 1074,c(16:17)],
+#                    y=tb[tb$isGain==0 & !tb$id == 1074,c(35:40)],
+#                    use = "pairwise",
+#                    method = "spearman",
+#                    adjust = "none",
+#                    alpha=.05)
+# print(test1, digits = 4)
+# 
+# test1 <- corr.test(x=tb[tb$isGain==0 & !tb$id == 1074 & !tb$id == 1354,c(16:17)],
+#                    y=tb[tb$isGain==0 & !tb$id == 1074 & !tb$id == 1354,c(35:40)],
+#                    use = "pairwise",
+#                    method = "spearman",
+#                    adjust = "none",
+#                    alpha=.05)
+# print(test1, digits = 4)
+# 
+# 
+# exclude2 = tb$id[tb$isGain==0 & tb$a_r50 > 0.4]
+# exclude2 # 95
+# exclude2 = tb$id[tb$isGain==0 & tb$a_r50 < -0.3]
+# exclude2 # 1234
+# 
+# # change names for graphs
+# colnames(tb2faGain)[16] <- 'Risk'
+# colnames(tb2faGain)[17] <- 'Ambiguity'
+# 
+# colnames(tb2faLoss)[16] <- 'Risk'
+# colnames(tb2faLoss)[17] <- 'Ambiguity'
 
 ##### CAPS and clinical measurements distribution ####
 colnames(tb)[30]<-'Reexp'
@@ -913,156 +951,8 @@ tb$group[is.nan(tb$stai_x1_total)]
 t.test(tb$stai_x2_total[tb$isGain == 1 & tb$group == 'C'],tb$stai_x2_total[tb$isGain == 1 & tb$group == 'P'] )
 
 
-##### model-based and model-free correlation with CAPS, single scatter plot ####
-
-names(tb)
-# colnames(tb)[35]<-'Reexp'
-# colnames(tb)[36]<-'Avoid'
-# colnames(tb)[37]<-'Numb'
-# colnames(tb)[38]<-'Dysphoric'
-# colnames(tb)[39]<-'Anxious'
-# colnames(tb)[40]<-'Total'
-
-colnames(tb)[30]<-'Reexp'
-colnames(tb)[31]<-'Avoid'
-colnames(tb)[32]<-'Numb'
-colnames(tb)[33]<-'Dysphoric'
-colnames(tb)[34]<-'Anxious'
-colnames(tb)[35]<-'Total'
-
-ggplot(tb[tb$isGain==1,], aes(x=Total, y=alpha_t)) +
-  geom_point(size = 5) +
-  geom_smooth(method=lm, color = "black")+
-  theme_classic() +
-  theme(text = element_text(size=20),
-        axis.line = element_line(size = 1.5)) +
-  scale_x_continuous(limits=c(0, 120), breaks = c(0,30,60,90,120)) +
-  labs(x="CAPS total", y="Risk Attitude in Gain")
-
-ggplot(tb[tb$isGain==0,], aes(x=Total, y=beta_t)) +
-  geom_point(size = 5) + 
-  geom_smooth(method=lm, color = "black")+
-  theme_classic() +
-  theme(text = element_text(size=20),
-        axis.line = element_line(size = 1.5)) +
-  scale_x_continuous(limits=c(0, 120), breaks = c(0,30,60,90,120)) +
-  labs(x="CAPS total", y="Ambiguity Attitude in Loss")
-
-
-# accounting for education and income
-model1 <- lm(alpha_t ~ pcl5_total + age + kbit + education + income, data = tb[tb$isGain==1,])
-model1 <- lm(alpha_t ~ pcl5_total, data = tb[tb$isGain==1,])
-model_sum <- summary(model1)
-model_sum
-model_anova <- anova(model1)
-model_anova
-
-model2 <- lm(beta_t ~ pcl5_total + age + kbit + education + income, data = tb[tb$isGain==0,])
-model2 <- lm(beta_t ~ pcl5_total, data = tb[tb$isGain==0,])
-model_sum <- summary(model2)
-model_sum
-model_anova <- anova(model2)
-model_anova
-
-##### model-based and model-free correlation with factors #####
-cor.plot(tb2faGain[,c(55:57, 16:17, 21:22)],
-         main = 'Gains',
-         numbers = TRUE,xlas=2)
-
-pairs.panels(tb2faGain[,c(55:57, 16:17, 21:22)],main = 'Gains', pch='.')
-
-chart.Correlation(tb2faGain[,c(55:57, 16:17, 21:22)], 
-                  histogram=TRUE, 
-                  method = c("pearson")
-)
-
-test1 <- corr.test(x=tb2faGain[,c(53:54)],
-                   y=tb2faGain[,c(16:17, 21:22)],
-                   use = "pairwise",
-                   method = "spearman",
-                   adjust = "none",
-                   alpha=.05)
-print(test1, digits = 4)
-
-# only with model-based attitudes
-chart.Correlation(tb2faGain[,c(55:57, 16:17)], 
-                  histogram=TRUE, 
-                  method = c("pearson"))
-
-
-chart.Correlation(tb[,c(16:17, 21:22)], 
-                  histogram=TRUE, 
-                  method = c("pearson"))
-
-cor.plot(tb2faLoss[,c(55:57, 16:17, 21:22)],
-         main='Loss',
-         numbers = TRUE,xlas=2)
-
-pairs.panels(tb2faLoss[,c(55:57, 16:17, 21:22)],main='Loss',pch='.')
-
-chart.Correlation(tb2faLoss[,c(55:57, 16:17, 21:22)], 
-                  histogram=TRUE, 
-                  method = c("pearson"))
-
-test1 <- corr.test(x=tb2faLoss[,c(55:57)],
-                   y=tb2faLoss[,c(16:17, 21:22)],
-                   use = "pairwise",
-                   method = "spearman",
-                   adjust = "none",
-                   alpha=.05)
-print(test1, digits = 4)
-
-
-
-
-chart.Correlation(tb2faLoss[,c(55:57, 16:17)], 
-                  histogram=TRUE, 
-                  method = c("pearson"))
-
-chart.Correlation(tb2faLoss[,c(16:17, 21:22)], 
-                  histogram=TRUE, 
-                  method = c("pearson"))
-
-# test for correlation model based
-corr.test(x=tb2faGain[,c(53:54)],
-          y=tb2faGain[,c(16:17)],
-          use = "pairwise",
-          method = "pearson",
-          adjust = "none",
-          alpha=.05
-)
-
-corr.test(x=tb2faLoss[,c(55:57)],
-          y=tb2faLoss[,c(16:17)],
-          use = "pairwise",
-          method = "pearson",
-          adjust = "none",
-          alpha=.05
-)
-
-# test for correlation model free
-corr.test(x=tb2faGain[,c(55:57)],
-          y=tb2faGain[,c(21:22)],
-          use = "pairwise",
-          method = "pearson",
-          adjust = "none",
-          alpha=.05
-)
-
-corr.test(x=tb2faLoss[,c(55:57)],
-          y=tb2faLoss[,c(21:22)],
-          use = "pairwise",
-          method = "pearson",
-          adjust = "none",
-          alpha=.05
-)
-
-
-
 ##### Group analysis #####
-# tb$isGain <- as.factor(tb$isGain)
-# tb$group <- as.factor(tb$group)
-# tb$id <- as.factor(tb$id)
+
 # count subject
 sum(tb$group == 'C')/2
 sum(tb$group == 'P')/2
@@ -1134,6 +1024,20 @@ anova(model3)
 
 model4 <- lme(a_r50 ~ isGain + group+ isGain*group, random = ~isGain|id, na.action=na.omit, data = tb_plot)
 anova(model4)
+
+# interpreting interaction, require emmeans package
+# visualize the interaction
+emmip(model2, group ~ isGain)
+
+# post-hoc comparison of means, require packages emmeans
+model4.emm <- emmeans(model4,  ~ isGain:group)
+# interaction contrast - contrast of contrast, ref: https://cran.r-project.org/web/packages/emmeans/vignettes/interactions.html
+ic_st <- contrast(model1.emm, interaction=TRUE)
+coef(ic_st)
+test(ic_st, joint = TRUE)
+# simple contrast
+contrast(model4.emm, simple = "each", adjust = "fdr")
+pairs(model4.emm, simple = "each", adjust = "fdr")
 
   ##### model based #####
 # risk attitudes, gain-loss, 2groups-controls and PTSD only
@@ -1386,11 +1290,7 @@ ces_anova
 
 ##### Behavioral, cognitive, and symptom #####
 
-
-
-
 # correlation between symptom and KBIT
-names(tb)
 # all
 chart.Correlation(tb[tb$isGain==1,c(31,34,40,46,47:48,49,54)],
                   histogram = TRUE)
@@ -1398,9 +1298,6 @@ chart.Correlation(tb[tb$isGain==1,c(31,34,40,46,47:48,49,54)],
 # by group
 chart.Correlation(tb[tb$isGain==1 & tb$group == 'C',c(31,34,40,46,47:48,49,54)],
                   histogram = TRUE)
-
-
-
 
 
 # correlation between kbit and behavior
