@@ -74,7 +74,7 @@ data_meanse <- function(x) {
 path <- "D:/Ruonan/Projects in the lab/VA_RA_PTB/Clinical and behavioral"
 setwd(path)
 load('data_all_noFemale_day1day2_08272019.rda')
-load('data_all_noFemale_08272019.rda')
+# load('data_all_noFemale_08272019.rda')
 # load('data_all_noPCA_day1day2_04092019.rda')
 # load('data_all_noPCA_04092019.rda')
 # load('data_all_04082019.rda')
@@ -153,9 +153,9 @@ names(tb)
 
 ##### select day ####
 # day1
-tb <- tb_all[tball$isExcluded_behavior==0 & tball$isDay1 == 1,]
+tb <- tb_all[tb_all$isExcluded_behavior==0 & tb_all$isDay1 == 1,]
 # day2
-tb <- tb_all[tball$isExcluded_behavior==0 & tball$isDay1 == 0,]
+tb <- tb_all[tb_all$isExcluded_behavior==0 & tb_all$isDay1 == 0,]
 
 ##### Compare between day1 day2 #####
   ##### reorganize data ####
@@ -534,7 +534,8 @@ colnames(tb)
 colnames(tb)[c(29:35, 41:44, 49)] = c("BDI", "CAPS_ReExp","CAPS_Avoid","CAPS_Numb","CAPS_DysA","CAPS_AnxA",
                                            "CAPS_Total", "CTQ", "STAI-1","STAI-2","CES","DES")
 
-chart.Correlation(tb[tb$isGain==0 & tb$group=='P',c(53:54, 50, 52)], 
+# & tb$group=='P'
+chart.Correlation(tb[tb$isGain==0 & tb$group=='C', c(53:54, 50, 52)], 
                   histogram=TRUE, 
                   method = c("pearson"))
 
@@ -594,7 +595,7 @@ names(tb)
 
 # with CAPS
 colnames(tb)
-chart.Correlation(tb[tb$isGain==0,c(53:54, 30:35)],
+chart.Correlation(tb[tb$isGain==1,c(53:54, 30:35)],
                   histogram = TRUE,
                   method = "pearson")
 
@@ -628,6 +629,12 @@ print(corr.test(x=tb[tb$isGain==0,]$CAPS_Total,
                    adjust = "none",
                    alpha=.05), 
       digits = 4)
+
+# with PCL5 and PCLM
+colnames(tb)
+chart.Correlation(tb[tb$isGain==0,c(53:54, 75, 93)],
+                  histogram = TRUE,
+                  method = "pearson")
 
 # with pcl
 ggplot(tb[tb$isGain==0, ], aes(x=pclm_total, y=alpha_t)) + 
@@ -961,11 +968,11 @@ sum(tb$group == 'R')/2
   ##### General code for any variable #####
 group2plot = c('C', 'P')
 # domain2plot = 1
-y2plot = 'a_r50'
+y2plot = 'alpha_t'
 tb_plot = tb[is.element(tb$group, group2plot),]
-tb_plot = tb_plot[tb_plot$gamma < 20 & tb_plot$gamma > -20, ]
+# tb_plot = tb_plot[tb_plot$gamma < 20 & tb_plot$gamma > -20, ]
 
-sum(!is.nan(tb_plot$beta_t[tb_plot$isGain == 0 & tb_plot$group == 'C']))
+sum(!is.nan(tb_plot$r[tb_plot$isGain == 0 & tb_plot$group == 'P']))
 
 # bar plot
 tb_summ <- data_summary(tb_plot, varname = y2plot, groupnames = c('isGain', 'group'))
@@ -1001,8 +1008,10 @@ ggplot(tb_plot, aes(isGain, eval(parse(text = y2plot)), fill=group)) +
   ylab(y2plot)
 
 
-var_anova = ezANOVA(data=tb_plot, 
-                     dv = alpha_t,
+tb_anova <- tb_plot[!is.element(tb_plot$id, tb_plot$id[is.nan(tb_plot$beta_t)]),]
+tb_anova <- tb_plot
+var_anova = ezANOVA(data= tb_anova, 
+                     dv = a_r50,
                      wid = .(id),
                      within = .(isGain),
                      between = .(group),
@@ -1027,17 +1036,17 @@ anova(model4)
 
 # interpreting interaction, require emmeans package
 # visualize the interaction
-emmip(model2, group ~ isGain)
+emmip(model4, group ~ isGain)
 
 # post-hoc comparison of means, require packages emmeans
-model4.emm <- emmeans(model4,  ~ isGain:group)
+model.emm <- emmeans(model4,  ~ isGain:group)
 # interaction contrast - contrast of contrast, ref: https://cran.r-project.org/web/packages/emmeans/vignettes/interactions.html
-ic_st <- contrast(model1.emm, interaction=TRUE)
+ic_st <- contrast(model.emm, interaction=TRUE)
 coef(ic_st)
 test(ic_st, joint = TRUE)
 # simple contrast
-contrast(model4.emm, simple = "each", adjust = "fdr")
-pairs(model4.emm, simple = "each", adjust = "fdr")
+contrast(model.emm, simple = "each", adjust = "fdr")
+# pairs(model.emm, simple = "each", adjust = "fdr") # the argument adjust probably does not work for pairs()
 
   ##### model based #####
 # risk attitudes, gain-loss, 2groups-controls and PTSD only
